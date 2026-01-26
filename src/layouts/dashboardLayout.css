@@ -1,0 +1,33 @@
+.dashboard-layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+/* Sidebar a la izquierda */
+.dashboard-layout .sidebar {
+  width: 20%;
+  flex-shrink: 0;
+}
+
+/* Zona derecha (navbar + contenido) */
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* importante para overflow */
+}
+
+/* Navbar arriba */
+.dashboard-main .navbar {
+  height: 60px;
+  flex-shrink: 0;
+}
+
+/* Contenido que cambia */
+.dashboard-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background: #f5f6fa;
+}

@@ -1,0 +1,73 @@
+:root {
+  --font-base:
+    "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+
+  --h1: 32px;
+  --h2: 28px;
+  --h3: 24px;
+  --h4: 20px;
+  --h5: 18px;
+  --h6: 16px;
+}
+
+body {
+  font-family: var(--font-base);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: #111827;
+}
+
+/* Headings */
+h1 {
+  font-size: var(--h1);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: var(--h2);
+  font-weight: 600;
+}
+
+h3 {
+  font-size: var(--h3);
+  font-weight: 600;
+}
+
+h4 {
+  font-size: var(--h4);
+  font-weight: 500;
+}
+
+h5 {
+  font-size: var(--h5);
+  font-weight: 500;
+}
+
+h6 {
+  font-size: var(--h6);
+  font-weight: 500;
+}
+
+/* Text */
+p {
+  font-size: var(--text-base);
+  margin: 0;
+  color: #a8a8a8;
+}
+
+small {
+  font-size: var(--text-xs);
+  color: #6b7280;
+}
+
+/* Links */
+a {
+  font-weight: 500;
+  color: inherit;
+}
