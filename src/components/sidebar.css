@@ -1,2 +1,40 @@
+:root {
+  --sidebar-bg: #111626;
+  --gray-m: #a8a8a8;
+  --hover: #4f27ee;
+}
+
 .sidebar {
+  background-color: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 30px 40px;
+  color: white;
+}
+
+.divider {
+  width: 100%;
+  border: 1px solid var(--gray-m);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-nav__item {
+  font-size: 24px;
+  font-weight: 300;
+  padding: 12px 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.sidebar-nav__item:hover {
+  background-color: var(--hover);
+  color: white;
 }

@@ -47,7 +47,7 @@ function Login() {
         password: form.password,
       });
 
-      navigate("/dashboard");
+      navigate("/app/dashboard");
     } catch (err) {
       if (err.response?.data?.error) {
         setError(err.response.data.error);

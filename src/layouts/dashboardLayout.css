@@ -6,7 +6,7 @@
 
 /* Sidebar a la izquierda */
 .dashboard-layout .sidebar {
-  width: 20%;
+  width: 350px;
   flex-shrink: 0;
 }
 
@@ -20,7 +20,7 @@
 
 /* Navbar arriba */
 .dashboard-main .navbar {
-  height: 60px;
+  height: 80px;
   flex-shrink: 0;
 }
 
