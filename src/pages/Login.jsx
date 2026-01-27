@@ -3,10 +3,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/login.css";
 import { FaLock, FaGoogle, FaGithub } from "react-icons/fa";
+import { useAuth } from "../auth/AuthContext";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function Login() {
+  const { login } = useAuth();
+
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -42,11 +45,12 @@ function Login() {
     if (!validateForm()) return;
 
     try {
-      await api.post("/auth/login", {
+      const response = await api.post("/auth/login", {
         email: form.email,
         password: form.password,
       });
 
+      login(response.data.token, response.data.user);
       navigate("/app/dashboard");
     } catch (err) {
       if (err.response?.data?.error) {
@@ -102,7 +106,7 @@ function Login() {
           </button>
         </form>
 
-        <div className="divider">
+        <div className="continue">
           <span>Or continue with</span>
         </div>
 
