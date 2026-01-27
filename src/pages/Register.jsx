@@ -66,7 +66,6 @@ function Register() {
         password2: form.confirmPassword,
       });
 
-      console.log("User registered successfully");
       setSuccess(true);
     } catch (err) {
       if (err.response?.data?.error) {

@@ -52,6 +52,16 @@
   border: 1px solid #ccc;
 }
 
+/* CREATEUSER.jsx */
+.create-user {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.role-input {
+  margin-bottom: 30px;
+}
+
 .login-options {
   display: flex;
   justify-content: space-between;
@@ -104,11 +114,12 @@ a:hover {
   background-color: var(--hover);
 }
 
-.divider {
+.continue {
   text-align: center;
   margin: 15px 0;
   font-size: 14px;
   color: #777;
+  border: none;
 }
 
 .social-login {
@@ -158,6 +169,15 @@ a:hover {
 .form-error {
   background: #fee2e2;
   color: #991b1b;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.form-success {
+  background: #e3fee2;
+  color: #00c24e;
   padding: 10px;
   border-radius: 8px;
   margin-bottom: 12px;
