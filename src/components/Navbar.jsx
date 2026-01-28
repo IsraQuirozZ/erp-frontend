@@ -1,7 +1,13 @@
 import "./navbar.css";
 import { useState, useRef, useEffect } from "react";
-import { FaBell, FaSearch, FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
-import { IoPersonAdd } from "react-icons/io5";
+import {
+  FaBell,
+  FaSearch,
+  FaUser,
+  FaCog,
+  FaSignOutAlt,
+  FaUserPlus,
+} from "react-icons/fa";
 import { useAuth } from "../auth/AuthContext";
 
 function Navbar() {
@@ -25,13 +31,13 @@ function Navbar() {
     <header className="navbar">
       <div className="left">
         <div className="search-input">
-          <FaSearch size={30} className="search-input__icon" />
+          <FaSearch size={20} className="search-input__icon" />
           <input
             className="search-input__field"
             placeholder="Search for customers, orders, products..."
           />
         </div>
-        <FaBell size={40} className="notifications" />
+        <FaBell size={35} className="notifications" />
       </div>
       <div
         className="user"
@@ -49,21 +55,21 @@ function Navbar() {
         <h4>{auth?.user?.username.replace(/\b\w/g, (l) => l.toUpperCase())}</h4>
         <div className={`user-menu ${open ? "is-open" : ""}`}>
           <a href="/app/profile">
-            <FaUser />
+            <FaUser size={20} />
             Perfil
           </a>
           {isAdmin && (
             <a href="/app/users/create">
-              <IoPersonAdd />
+              <FaUserPlus size={20} />
               Create User
             </a>
           )}
           <a href="/app/settings">
-            <FaCog />
+            <FaCog size={20} />
             Configuración
           </a>
           <button className="logout-btn" onClick={logout}>
-            <FaSignOutAlt />
+            <FaSignOutAlt size={20} />
             Cerrar sesión
           </button>
         </div>

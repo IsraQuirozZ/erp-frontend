@@ -1,0 +1,29 @@
+:root {
+  --gray-l: #d9d9d9;
+  --dark: #111626;
+}
+
+.addBtn {
+  border: 2px solid var(--gray-l);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  cursor: pointer;
+  width: max-content;
+  background-color: inherit;
+}
+
+.addBtn-icon {
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.addBtn:hover {
+  box-shadow: 2px 2px 20px rgba(0, 0, 0, 0.25);
+}
+
+.addBtn {
+  text-align: left;
+}
