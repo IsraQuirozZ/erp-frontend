@@ -1,0 +1,30 @@
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  padding: 12px;
+}
+
+.data-table td {
+  padding: 14px 12px;
+  border-top: 1px solid #2a2a3d;
+}
+
+.data-table tbody tr {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.data-table tbody tr:hover {
+  background: #1e1e2f;
+}
+
+.table-actions {
+  display: flex;
+  gap: 10px;
+}
