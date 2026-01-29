@@ -8,7 +8,7 @@
   border: 2px solid var(--gray-l);
   border-radius: 8px;
   padding: 12px;
-  width: max-content;
+  min-width: max-content;
   display: flex;
   flex-direction: column;
   align-items: center;

@@ -18,22 +18,23 @@ function Sidebar() {
         </a>
 
         {/* ADMIN */}
+        {/* TODO: STAY HOVER WHEN IN PAGE */}
         {isAdmin && (
           <>
             <a href="/app/customers" className="sidebar-nav__item">
-              <FaUsers size={30} />
+              <FaUsers size={25} />
               Customers
             </a>
             <a href="/app/customers" className="sidebar-nav__item">
-              <MdAttachMoney size={30} />
+              <MdAttachMoney size={25} />
               Suppliers
             </a>
             <a href="/app/customers" className="sidebar-nav__item">
-              <FaBox size={30} />
+              <FaBox size={25} />
               Products
             </a>
             <a href="/app/customers" className="sidebar-nav__item">
-              <FaUserTie size={30} />
+              <FaUserTie size={25} />
               Employees
             </a>
           </>

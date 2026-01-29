@@ -5,16 +5,16 @@ function TableToolbar({ placeholder }) {
   return (
     <div className="table-toolbar">
       <div className="table-toolbar__search">
-        <FaSearch />
+        <FaSearch className="tabel-toolbar__search-icon" />
         <input placeholder={placeholder} />
       </div>
 
       <div className="table-toolbar__actions">
         <button>
-          <FaSort /> Sort
+          <FaSort className="table-toolbar__actions-icon" /> Sort
         </button>
         <button>
-          <FaThList />
+          <FaThList className="table-toolbar__actions-icon" />
         </button>
       </div>
     </div>

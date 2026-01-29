@@ -1,3 +1,13 @@
+:root {
+  --primary: #4f27ee;
+  --hover: #3c1cbb;
+  --view: #879ffc;
+  --edit: rgb(255, 204, 0);
+  --delete: #eb6972;
+  --gray-l: #d9d9d9;
+  --gray-m: #a8a8a8;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -6,7 +16,7 @@
 .data-table th {
   text-align: left;
   font-size: 0.85rem;
-  color: #9ca3af;
+  color: var(--gray-m);
   padding: 12px;
 }
 
@@ -22,9 +32,23 @@
 
 .data-table tbody tr:hover {
   background: #1e1e2f;
+  /* background: #383856; */
+  /* background-color: #d9d9d95d; */
+}
+
+.data-table tbody tr:hover td {
+  color: white;
 }
 
 .table-actions {
   display: flex;
-  gap: 10px;
+  gap: 15px;
+}
+
+.icon-edit:hover {
+  color: var(--edit);
+}
+
+.icon-delete:hover {
+  color: var(--delete);
 }

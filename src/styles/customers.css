@@ -3,18 +3,27 @@
   --green: #00c24e;
   --table-bg: #111626;
 }
+.customers-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* gap: 24px; */
+  overflow: hidden; /* clave */
+}
 
 .container-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .dashboard-cards {
+  flex-shrink: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-column-gap: 0px;
+  grid-column-gap: 20px;
 }
 
 .dashboard-card:nth-child(1) {
@@ -26,12 +35,20 @@
 }
 
 .table-container {
-  background: var(--table-bg);
   background: inherit;
   border: 2px solid var(--gray-l);
   box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.1);
   padding: 20px;
   border-radius: 14px;
   margin-top: 20px;
-  min-height: 500px;
+  /* max-height: 350px; */
+  flex: 1; /* ocupa el espacio restante */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* evita scroll doble */
+  overflow: auto;
 }
+
+/* .table-dark {
+  background: var(--table-bg);
+} */

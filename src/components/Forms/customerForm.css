@@ -1,0 +1,80 @@
+.customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Sections */
+.form-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: #333;
+}
+
+/* Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px 22px;
+}
+
+.form-span-2 {
+  grid-column: span 2;
+}
+
+/* Fields */
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.form-field input,
+.form-field select {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: none;
+  border-color: #4f27ee;
+}
+
+/* Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.btn-primary {
+  height: 42px;
+  padding: 0 24px;
+  border-radius: 10px;
+  background: #4f27ee;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  height: 42px;
+  padding: 0 24px;
+  border-radius: 10px;
+  background: #f4f4f6;
+  border: none;
+  cursor: pointer;
+  color: #333;
+}
