@@ -1,3 +1,10 @@
+:root {
+  --primary: #4f27ee;
+  --hover: #3c1cbb;
+  --gray-l: #d9d9d9;
+  --gray-m: #a8a8a8;
+}
+
 .table-toolbar {
   display: flex;
   justify-content: space-between;
@@ -5,21 +12,27 @@
 }
 
 .table-toolbar__search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #1e1e2f;
-  padding: 10px 14px;
-  border-radius: 10px;
+  position: relative;
   width: 280px;
 }
 
+.tabel-toolbar__search-icon {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--gray-m);
+  pointer-events: none;
+  color: var(--gray-m);
+}
+
 .table-toolbar__search input {
-  background: none;
-  border: none;
-  color: white;
-  outline: none;
+  background: inherit;
   width: 100%;
+  border: 2px solid var(--gray-l);
+  border-radius: 10px;
+  padding: 10px 40px;
 }
 
 .table-toolbar__actions {
@@ -28,10 +41,16 @@
 }
 
 .table-toolbar__actions button {
-  background: #1e1e2f;
+  /* background: #1e1e2f; */
+  background-color: var(--primary);
   border: none;
   padding: 10px 14px;
   border-radius: 10px;
   color: white;
   cursor: pointer;
+  transition: 0.3s all;
+}
+
+.table-toolbar__actions button:hover {
+  background-color: var(--hover);
 }

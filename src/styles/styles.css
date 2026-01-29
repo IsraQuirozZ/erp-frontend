@@ -6,10 +6,16 @@
 }
 
 :root {
+  --primary: #4f27ee;
   --hover: #3c1cbb;
 }
 
+input {
+  border: none;
+  border-color: inherit;
+}
+
 input:focus {
-  border-color: var(--hover);
-  outline: 1px solid var(--hover);
+  border: 2px solid var(--primary);
+  outline: none;
 }

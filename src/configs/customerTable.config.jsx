@@ -4,12 +4,7 @@ export const customerColumns = [
   {
     key: "name",
     label: "Name",
-    render: (row) => (
-      <div>
-        <strong>{row.name}</strong>
-        <small style={{ opacity: 0.6 }}>Created recently</small>
-      </div>
-    ),
+    render: (row) => <strong>{row.name}</strong>,
   },
   { key: "email", label: "Email" },
   { key: "phone", label: "Phone" },

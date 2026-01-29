@@ -13,6 +13,6 @@
 .status-badge.inactive {
   background: rgba(156, 163, 175, 0.2);
   color: #9ca3af;
-  background-color: #fe2a382a;
-  color: #fe2a38;
+  /* background-color: #fe2a382a;
+  color: #fe2a38; */
 }

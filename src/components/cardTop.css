@@ -1,4 +1,5 @@
 .card-top {
+  min-width: 400px;
   padding: 12px;
   border: 2px solid var(--gray-l);
   border-radius: 8px;
@@ -37,7 +38,7 @@
 }
 
 .card-top__table tbody td {
-  padding: 0px 0;
+  padding: 0px 0px 0 5px;
   font-size: 14px;
   color: #374151;
 }
@@ -48,6 +49,11 @@
 }
 
 .card-top__table tbody tr:hover {
-  background-color: #f3874418;
+  background: #1e1e2f;
   cursor: pointer;
+}
+
+.card-top__table tbody tr:hover td,
+.card-top__table tbody tr:hover span {
+  color: white;
 }

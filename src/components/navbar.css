@@ -41,7 +41,7 @@
 .search-input__field {
   width: 100%;
   height: 40px;
-  border: 1px solid var(--gray-m);
+  border: 2px solid var(--gray-l);
   border-radius: 5px;
   padding: 12px 45px;
   font-size: 18px;

@@ -27,6 +27,7 @@ function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // TODO: OPEN USER MENU WHEN HOVER (NOT ONCLICK)
   return (
     <header className="navbar">
       <div className="left">

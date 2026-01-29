@@ -1,5 +1,10 @@
 import AddBtn from "../components/addBtn";
 import DashboardCard from "../components/DashboardCard";
+
+// FORM MODAL
+import FormModal from "../components/Modals/FormModal.jsx";
+import CustomerForm from "../components/Forms/CustomersForm.jsx";
+
 // CUSTOMERS TABLE
 import TableToolbar from "../components/TableToolbar.jsx";
 import DataTable from "../components/DataTable/DataTable";
@@ -11,17 +16,17 @@ import { getCustomers } from "../services/customer.service.js";
 
 import CardTop from "../components/CardTop";
 import { FaUserGroup, FaArrowTrendUp } from "react-icons/fa6";
-import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
-import { useNavigate } from "react-router-dom";
 import "../styles/customers.css";
 
 function Customers() {
-  // const navigate = useNavigate();
-
   //BBDD
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // OnClick() -> AddBtn
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -35,7 +40,6 @@ function Customers() {
           phone: c.phone,
           city: c.address?.province?.name ?? "-",
           status: c.active ? "Active" : "Inactive",
-          createdAt: c.address?.municipality ?? "",
         }));
 
         setCustomers(mappedCustomers);
@@ -50,9 +54,18 @@ function Customers() {
   const customerActions = (row) => {
     return (
       <div className="table-actions">
-        <FaEye title="View" onClick={() => openPreview(row)} />
-        <FaEdit title="Edit" onClick={() => openEdit(row)} />
-        <FaTrash title="Delete" onClick={() => deleteCustomer(row.id)} />
+        <FaEdit
+          size={20}
+          className="table-actions__icon icon-edit"
+          title="Edit"
+          onClick={() => openEdit(row)}
+        />
+        <FaTrash
+          size={20}
+          className="table-actions__icon icon-delete"
+          title="Delete"
+          onClick={() => deleteCustomer(row.id)}
+        />
       </div>
     );
   };
@@ -80,7 +93,7 @@ function Customers() {
           icon={FaUserGroup}
           action="Add Customer"
           description="Register a new customer"
-          onClick={() => navigate("/customers/new")}
+          onClick={() => setIsModalOpen(true)}
           iconColor="#d752ce"
           iconBgColor="#ea7ce376"
         />
@@ -99,7 +112,7 @@ function Customers() {
           icon={FaUserGroup}
           iconBgColor="#6C89FF"
           data="182"
-          stats={-1.4}
+          stats={-3}
         />
 
         <CardTop
@@ -109,12 +122,13 @@ function Customers() {
         />
       </div>
 
-      <div className="table-container">
+      <div className="table-container table-dark">
         {/* TOP TOOLBAR */}
         <TableToolbar placeholder="Search by name or email" />
 
         {/* TABLE */}
         <DataTable
+          className="table-scroll"
           columns={customerColumns}
           data={customers}
           onRowClick={(row) => openPreview(row)}
@@ -124,6 +138,14 @@ function Customers() {
         {/* FOOTER */}
         <TableFooter total={customers.length} page={1} pages={1} />
       </div>
+
+      <FormModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Create Customer"
+      >
+        <CustomerForm />
+      </FormModal>
     </div>
   );
 }
