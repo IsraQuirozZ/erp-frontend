@@ -1,3 +1,9 @@
+:root {
+  --primary: #4f27ee;
+  --hover: #3c1cbb;
+  --gray-l: #d9d9d9;
+  --gray-m: #a8a8a8;
+}
 .customer-form {
   display: flex;
   flex-direction: column;
@@ -40,7 +46,7 @@
   height: 44px;
   padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--gray-l);
   font-size: 14px;
 }
 
@@ -53,28 +59,48 @@
 /* Actions */
 .form-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 14px;
+  justify-content: space-between;
+  align-items: end;
   padding-top: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--gray-l);
+}
+
+.form-actions__btns {
+  display: flex;
+  gap: 14px;
 }
 
 .btn-primary {
   height: 42px;
   padding: 0 24px;
   border-radius: 10px;
-  background: #4f27ee;
+  background: var(--primary);
   color: #fff;
   border: none;
   cursor: pointer;
+  transition: 0.3s all;
+}
+
+.btn-primary:hover {
+  background: var(--hover);
 }
 
 .btn-secondary {
   height: 42px;
   padding: 0 24px;
   border-radius: 10px;
-  background: #f4f4f6;
-  border: none;
+  background: white;
+  border: 1px solid var(--gray-m);
   cursor: pointer;
-  color: #333;
+  color: #000;
+  transition: 0.3s all;
+}
+
+.btn-secondary:hover {
+  background: #4f27ee99;
+  color: white;
+}
+
+.input-error {
+  border-color: #e54848 !important;
 }

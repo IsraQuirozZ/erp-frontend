@@ -3,7 +3,7 @@ import DashboardCard from "../components/DashboardCard";
 
 // FORM MODAL
 import FormModal from "../components/Modals/FormModal.jsx";
-import CustomerForm from "../components/Forms/CustomersForm.jsx";
+import CustomerForm from "../components/forms/CustomersForm.jsx";
 
 // CUSTOMERS TABLE
 import TableToolbar from "../components/TableToolbar.jsx";
@@ -82,6 +82,7 @@ function Customers() {
     console.log("Delete customer", id);
   };
 
+  // TODO: Change name to reuse css
   return (
     <div className="customers-container">
       <div className="container-top">
@@ -144,7 +145,7 @@ function Customers() {
         onClose={() => setIsModalOpen(false)}
         title="Create Customer"
       >
-        <CustomerForm />
+        <CustomerForm onClose={() => setIsModalOpen(false)} />
       </FormModal>
     </div>
   );
