@@ -1,0 +1,50 @@
+.success-popup-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 15, 25, 0.55);
+  z-index: 50;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+.success-popup {
+  background: #fff;
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 32px;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+  animation: popIn 0.25s ease;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.success-icon {
+  font-size: 56px;
+  color: #00c24e;
+  margin-bottom: 18px;
+}
+
+.success-popup h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.success-popup p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 22px;
+}

@@ -13,6 +13,7 @@
   cursor: pointer;
   width: max-content;
   background-color: inherit;
+  transition: 0.3s all;
 }
 
 .addBtn-icon {
@@ -21,7 +22,18 @@
 }
 
 .addBtn:hover {
-  box-shadow: 2px 2px 20px rgba(0, 0, 0, 0.25);
+  background-color: var(--dark);
+  color: white;
+  border-color: var(--dark);
+}
+
+.addBtn:hover .addBtn-icon {
+  background-color: white !important  ;
+  /* color: var(--dark) !important; */
+}
+
+.addBtn:hover .tx-lg {
+  color: white;
 }
 
 .addBtn {

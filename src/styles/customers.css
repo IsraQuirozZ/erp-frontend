@@ -1,5 +1,7 @@
 :root {
   --gray-l: #d9d9d9;
+  --gray-m: #a8a8a8;
+  --gray-d: #606061;
   --green: #00c24e;
   --table-bg: #111626;
 }
@@ -17,6 +19,10 @@
   align-items: flex-end;
   margin-bottom: 20px;
   flex-shrink: 0;
+}
+
+.container-title h4 {
+  color: var(--gray-d);
 }
 
 .dashboard-cards {

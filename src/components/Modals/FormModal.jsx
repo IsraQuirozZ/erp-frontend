@@ -1,4 +1,5 @@
 import "./formModal.css";
+import { IoIosCloseCircle } from "react-icons/io";
 
 function FormModal({ open, onClose, title, children }) {
   if (!open) return null;
@@ -8,7 +9,9 @@ function FormModal({ open, onClose, title, children }) {
       <div className="form-modal">
         <div className="form-modal-header">
           <h2>{title}</h2>
-          <button onClick={onClose}>×</button>
+          <button className="close-btn" onClick={onClose}>
+            <IoIosCloseCircle size={40} />
+          </button>
         </div>
 
         <div className="form-modal-body">{children}</div>
