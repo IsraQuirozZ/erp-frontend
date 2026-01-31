@@ -1,16 +1,24 @@
 import "./tableFooter.css";
+import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 
-function TableFooter({ total, page, pages }) {
+function TableFooter({ page, pages, onPageChange, total }) {
   return (
     <div className="table-footer">
       <span>
-        Showing {total > 0 ? 1 : 0} to {total} of {total} results
+        Page {page} of {pages} - {total} results
       </span>
 
       <div className="pagination">
-        <button disabled>{"<"}</button>
+        <button disabled={page === 1} onClick={() => onPageChange(page - 1)}>
+          <IoIosArrowBack />
+        </button>
         <button className="active">{page}</button>
-        <button disabled>{">"}</button>
+        <button
+          disabled={page === pages}
+          onClick={() => onPageChange(page + 1)}
+        >
+          <IoIosArrowForward />
+        </button>
       </div>
     </div>
   );
