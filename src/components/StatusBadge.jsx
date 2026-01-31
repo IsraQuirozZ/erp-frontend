@@ -1,9 +1,9 @@
 import "./statusBadge.css";
 
 function StatusBadge({ status }) {
-  return (
-    <span className={`status-badge ${status.toLowerCase()}`}>{status}</span>
-  );
+  if (!status) return null;
+  const normalized = String(status).toLowerCase();
+  return <span className={`status-badge ${normalized}`}>{normalized}</span>;
 }
 
 export default StatusBadge;

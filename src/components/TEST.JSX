@@ -1,33 +1,9 @@
 import "./customerForm.css";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import api from "../../api/axios";
 import SuccessPopup from "../Modals/SuccessPopup.jsx";
 
-const emptyForm = {
-  client: {
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-  },
-  address: {
-    postal_code: "",
-    street: "",
-    municipality: "",
-    number: "",
-    portal: "",
-    floor: "",
-    door: "",
-  },
-  province: { name: "" },
-};
-
-function CustomerForm({
-  mode = "create", // "create" | "edit"
-  initialData = null,
-  onClose,
-  onSuccess,
-}) {
+function CustomerForm({ onClose }) {
   // FRONT ERRORS
   const [errors, setErrors] = useState({});
 
@@ -35,33 +11,24 @@ function CustomerForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const [form, setForm] = useState(emptyForm);
-
-  /* ───────────── LOAD DATA FOR EDIT ───────────── */
-  useEffect(() => {
-    if (mode === "edit" && initialData) {
-      setForm({
-        client: {
-          firstName: initialData.firstName ?? "",
-          lastName: initialData.lastName ?? "",
-          email: initialData.email ?? "",
-          phone: initialData.phone ?? "",
-        },
-        address: {
-          postal_code: initialData.address?.postal_code ?? "",
-          street: initialData.address?.street ?? "",
-          municipality: initialData.address?.municipality ?? "",
-          number: initialData.address?.number ?? "",
-          portal: initialData.address?.portal ?? "",
-          floor: initialData.address?.floor ?? "",
-          door: initialData.address?.door ?? "",
-        },
-        province: {
-          name: initialData.address?.province?.name ?? "",
-        },
-      });
-    }
-  }, [mode, initialData]);
+  const [form, setForm] = useState({
+    client: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+    },
+    address: {
+      postal_code: "",
+      street: "",
+      municipality: "",
+      number: "",
+      portal: "",
+      floor: "",
+      door: "",
+    },
+    province: { name: "" },
+  });
 
   const updateForm = (section, field, value) => {
     setForm((prev) => ({
@@ -181,7 +148,6 @@ function CustomerForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  /* ───────────── SUBMIT ───────────── */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -190,15 +156,31 @@ function CustomerForm({
     if (!validateForm()) return;
 
     try {
-      if (mode === "create") {
-        await api.post("/clients/full", form);
-      } else {
-        await api.put(`/clients/full/${initialData.id_client}`, form);
-      }
-
+      const response = await api.post("/clients/full", form);
+      console.log("PAYLOAD FINAL", response);
       setSuccess(true);
+
+      setForm({
+        client: {
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+        },
+        address: {
+          postal_code: "",
+          street: "",
+          municipality: "",
+          number: "",
+          portal: "",
+          floor: "",
+          door: "",
+        },
+        province: { name: "" },
+      });
     } catch (error) {
       if (error.response?.data?.error) {
+        console.log("error");
         setError(error.response.data.error);
       } else {
         setError("Unexpected error");
@@ -405,24 +387,18 @@ function CustomerForm({
           </button>
 
           <button className="btn-primary" type="submit">
-            {mode === "create" ? "Create Customer" : "Update Customer"}
+            Save customer
           </button>
         </div>
       </div>
 
-      {/* ───────────── POPUP ───────────── */}
       <SuccessPopup
         open={success}
-        title={mode === "create" ? "Customer Created" : "Customer Updated"}
-        message={
-          mode === "create"
-            ? "The customer has been successfully created."
-            : "The customer has been successfully updated."
-        }
+        title="Customer created"
+        message="The customer has been successfully created."
         onClose={() => {
           setSuccess(false);
-          onClose();
-          onSuccess();
+          onClose(); // cerrar el modal principal
         }}
       />
     </form>

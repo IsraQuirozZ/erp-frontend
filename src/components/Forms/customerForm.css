@@ -59,7 +59,8 @@
 /* Actions */
 .form-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 14px;
   align-items: end;
   padding-top: 10px;
   border-top: 1px solid var(--gray-l);

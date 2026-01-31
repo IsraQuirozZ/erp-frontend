@@ -40,7 +40,8 @@
   gap: 8px;
 }
 
-.table-toolbar__actions button {
+.table-toolbar__actions button,
+.table-toolbar__filters select {
   /* background: #1e1e2f; */
   background-color: var(--primary);
   border: none;
@@ -49,8 +50,10 @@
   color: white;
   cursor: pointer;
   transition: 0.3s all;
+  font-size: 14px;
 }
 
-.table-toolbar__actions button:hover {
+.table-toolbar__actions button:hover,
+.table-toolbar__filters select:hover {
   background-color: var(--hover);
 }

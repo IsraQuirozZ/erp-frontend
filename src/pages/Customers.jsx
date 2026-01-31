@@ -1,9 +1,12 @@
 import AddBtn from "../components/addBtn";
 import DashboardCard from "../components/DashboardCard";
 
+// LOADING
+import LoadingOverlay from "../components/ui/LoadingOverlay";
+
 // FORM MODAL
 import FormModal from "../components/Modals/FormModal.jsx";
-import CustomerForm from "../components/forms/CustomersForm.jsx";
+import CustomerForm from "../components/Forms/CustomersForm.jsx";
 
 // CUSTOMERS TABLE
 import TableToolbar from "../components/TableToolbar.jsx";
@@ -12,11 +15,15 @@ import { customerColumns } from "../configs/customerTable.config.jsx";
 import TableFooter from "../components/TableFooter.jsx";
 
 import { useEffect, useState } from "react";
-import { getCustomers } from "../services/customer.service.js";
+import {
+  getCustomers,
+  getCustomerById,
+  activateCustomer,
+} from "../services/customer.service.js";
 
 import CardTop from "../components/CardTop";
-import { FaUserGroup, FaArrowTrendUp } from "react-icons/fa6";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaUserGroup, FaArrowTrendUp, FaPowerOff } from "react-icons/fa6";
+import { FaEdit } from "react-icons/fa";
 
 import "../styles/customers.css";
 
@@ -25,31 +32,50 @@ function Customers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // PAGINATION
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 5;
+
+  // FILTERS
+  // ACTIVE/INACTIVE
+  const [statusFilter, setStatusFilter] = useState("all");
+
   // OnClick() -> AddBtn
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formMode, setFormMode] = useState("create"); // "create" | "edit"
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+
+      const res = await getCustomers({ page, limit, status: statusFilter });
+
+      const mappedCustomers = res.data.map((c) => ({
+        id: c.id_client,
+        name: `${c.firstName} ${c.lastName}`,
+        email: c.email,
+        phone: c.phone,
+        city: c.address?.province?.name ?? "-",
+        status: c.active ? "Active" : "Inactive",
+        active: c.active,
+      }));
+
+      setCustomers(mappedCustomers);
+      setPages(res.pages);
+      setTotal(res.total);
+    } catch (error) {
+      console.error("Error loading customers", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const data = await getCustomers();
-
-        const mappedCustomers = data.map((c) => ({
-          id: c.id_client,
-          name: `${c.firstName} ${c.lastName}`,
-          email: c.email,
-          phone: c.phone,
-          city: c.address?.province?.name ?? "-",
-          status: c.active ? "Active" : "Inactive",
-        }));
-
-        setCustomers(mappedCustomers);
-      } catch (error) {
-        console.error("Error loading customers", error);
-      }
-    };
-
     fetchCustomers();
-  }, []);
+  }, [page, statusFilter]);
 
   const customerActions = (row) => {
     return (
@@ -60,26 +86,41 @@ function Customers() {
           title="Edit"
           onClick={() => openEdit(row)}
         />
-        <FaTrash
+        <FaPowerOff
           size={20}
           className="table-actions__icon icon-delete"
-          title="Delete"
-          onClick={() => deleteCustomer(row.id)}
+          title="Activate/Deactivate"
+          onClick={() => toggleActive(row)}
         />
       </div>
     );
   };
 
+  // PREVIEW
   const openPreview = (customer) => {
     console.log("Preview customer", customer);
   };
 
-  const openEdit = (customer) => {
-    console.log("Edit customer", customer);
+  // EDIT
+  const openEdit = async (row) => {
+    try {
+      setFormMode("edit");
+      const fullCustomer = await getCustomerById(row.id);
+      setSelectedCustomer(fullCustomer);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching customer details:", error);
+    }
   };
 
-  const deleteCustomer = (id) => {
-    console.log("Delete customer", id);
+  // ACTIVATE/DEACTIVATE
+  const toggleActive = async (row) => {
+    try {
+      await activateCustomer(row.id);
+      await fetchCustomers();
+    } catch (error) {
+      console.error("Error activating customer:", error);
+    }
   };
 
   // TODO: Change name to reuse css
@@ -94,7 +135,11 @@ function Customers() {
           icon={FaUserGroup}
           action="Add Customer"
           description="Register a new customer"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setFormMode("create");
+            setSelectedCustomer(null);
+            setIsModalOpen(true);
+          }}
           iconColor="#d752ce"
           iconBgColor="#ea7ce376"
         />
@@ -104,7 +149,7 @@ function Customers() {
           title="Total customers"
           icon={FaUserGroup}
           iconBgColor="#00c24e"
-          data="4734"
+          data={total}
           stats={3.4}
         />
 
@@ -124,12 +169,30 @@ function Customers() {
       </div>
 
       <div className="table-container table-dark">
+        <LoadingOverlay visible={loading} text="Loading customers..." />
         {/* TOP TOOLBAR */}
-        <TableToolbar placeholder="Search by name or email" />
+        <TableToolbar
+          placeholder="Search by name or email"
+          filters={[
+            {
+              key: "status",
+              type: "select",
+              value: statusFilter,
+              onChange: (value) => {
+                setPage(1);
+                setStatusFilter(value);
+              },
+              options: [
+                { label: "All", value: "all" },
+                { label: "Active", value: "active" },
+                { label: "Inactive", value: "inactive" },
+              ],
+            },
+          ]}
+        />
 
         {/* TABLE */}
         <DataTable
-          className="table-scroll"
           columns={customerColumns}
           data={customers}
           onRowClick={(row) => openPreview(row)}
@@ -137,15 +200,28 @@ function Customers() {
         />
 
         {/* FOOTER */}
-        <TableFooter total={customers.length} page={1} pages={1} />
+        <TableFooter
+          page={page}
+          pages={pages}
+          total={customers.length}
+          onPageChange={(newPage) => setPage(newPage)}
+        />
       </div>
 
       <FormModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Create Customer"
+        title={formMode === "create" ? "Create Customer" : "Edit Customer"}
       >
-        <CustomerForm onClose={() => setIsModalOpen(false)} />
+        <CustomerForm
+          mode={formMode}
+          initialData={selectedCustomer}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={async () => {
+            setIsModalOpen(false);
+            await fetchCustomers();
+          }}
+        />
       </FormModal>
     </div>
   );
