@@ -4,9 +4,11 @@ export const getCustomers = async ({
   page = 1,
   limit = 5,
   status = "active",
+  sort = "name",
+  order = "asc",
 } = {}) => {
   const response = await api.get("/clients", {
-    params: { page, limit, status },
+    params: { page, limit, status, sort, order },
   });
   return response.data;
 };

@@ -42,7 +42,6 @@
 
 .table-toolbar__actions button,
 .table-toolbar__filters select {
-  /* background: #1e1e2f; */
   background-color: var(--primary);
   border: none;
   padding: 10px 14px;
@@ -56,4 +55,10 @@
 .table-toolbar__actions button:hover,
 .table-toolbar__filters select:hover {
   background-color: var(--hover);
+}
+
+.sortBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
