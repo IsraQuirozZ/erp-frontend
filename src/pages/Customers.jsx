@@ -42,16 +42,30 @@ function Customers() {
   // ACTIVE/INACTIVE
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // SORTING
+  // NAME && LASTNAME
+  const [sort, setSort] = useState({
+    field: "name",
+    order: "asc",
+  });
+
   // OnClick() -> AddBtn
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formMode, setFormMode] = useState("create"); // "create" | "edit"
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
+  // FETCH CUSTOMERS
   const fetchCustomers = async () => {
     try {
       setLoading(true);
 
-      const res = await getCustomers({ page, limit, status: statusFilter });
+      const res = await getCustomers({
+        page,
+        limit,
+        status: statusFilter,
+        sort: sort.field,
+        order: sort.order,
+      });
 
       const mappedCustomers = res.data.map((c) => ({
         id: c.id_client,
@@ -75,7 +89,7 @@ function Customers() {
 
   useEffect(() => {
     fetchCustomers();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, sort]);
 
   const customerActions = (row) => {
     return (
@@ -189,6 +203,14 @@ function Customers() {
               ],
             },
           ]}
+          onSort={() => {
+            setPage(1);
+            setSort((prev) => ({
+              field: "name",
+              order: prev.order === "asc" ? "desc" : "asc",
+            }));
+          }}
+          sortOrder={sort.order}
         />
 
         {/* TABLE */}

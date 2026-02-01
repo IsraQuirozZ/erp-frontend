@@ -1,7 +1,8 @@
-import { FaSearch, FaSort, FaThList } from "react-icons/fa";
+import { FaSearch, FaSort, FaThList, FaCaretUp } from "react-icons/fa";
+
 import "./tableToolbar.css";
 
-function TableToolbar({ placeholder, filters = [] }) {
+function TableToolbar({ placeholder, filters = [], onSort, sortOrder }) {
   return (
     <div className="table-toolbar">
       {/* SEARCH */}
@@ -38,13 +39,15 @@ function TableToolbar({ placeholder, filters = [] }) {
             })}
           </div>
         )}
-        <button>
-          <FaSort className="table-toolbar__actions-icon" /> Sort
+        <button onClick={onSort} className="sortBtn">
+          {sortOrder === "asc" ? "A-Z" : "Z-A"}
+          <FaSort size={15} className="table-toolbar__actions-icon" />
         </button>
-        {/* 
-        <button>
-          <FaThList className="table-toolbar__actions-icon" />
-        </button> */}
+
+        <button className="sortBtn">
+          Created
+          <FaCaretUp size={15} className="table-toolbar__actions-icon" />
+        </button>
       </div>
     </div>
   );
