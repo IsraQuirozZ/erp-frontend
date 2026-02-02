@@ -1,4 +1,4 @@
-import api from "../api/axios"; // tu axios configurado
+import api from "../api/axios";
 
 export const getCustomers = async ({
   page = 1,
