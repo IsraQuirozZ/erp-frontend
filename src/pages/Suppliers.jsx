@@ -1,4 +1,9 @@
 import "../styles/customers.css";
+import { useEffect, useState } from "react";
+import { useToast } from "../components/ui/Toast";
+import { FaUserGroup, FaArrowTrendUp, FaPowerOff } from "react-icons/fa6";
+import { FaEdit } from "react-icons/fa";
+
 import AddBtn from "../components/addBtn";
 import DashboardCard from "../components/DashboardCard";
 
@@ -9,7 +14,9 @@ import LoadingOverlay from "../components/ui/LoadingOverlay";
 import FormModal from "../components/Modals/FormModal.jsx";
 import SupplierForm from "../components/Forms/SuppliersForm.jsx";
 
-// CUSTOMERS TABLE
+import CardTop from "../components/CardTop";
+
+// SUPPLIERS TABLE
 import TableToolbar from "../components/TableToolbar.jsx";
 import DataTable from "../components/DataTable/DataTable";
 import { supplierColumns } from "../configs/supplierTable.config.jsx";
@@ -18,18 +25,14 @@ import TableFooter from "../components/TableFooter.jsx";
 // PREVIEW
 import SupplierPreview from "../components/previews/SupplierPreview.jsx";
 
-import { useEffect, useState } from "react";
 import {
   getSuppliers,
   getSupplierById,
   activateSupplier,
 } from "../services/suppliers.service.js";
 
-import CardTop from "../components/CardTop";
-import { FaUserGroup, FaArrowTrendUp, FaPowerOff } from "react-icons/fa6";
-import { FaEdit } from "react-icons/fa";
-
 function Suppliers() {
+  const { showToast } = useToast();
   //BBDD
   const [suppliers, setSuppliers] = useState([]);
 
@@ -39,7 +42,7 @@ function Suppliers() {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const limit = 5;
+  const limit = 4;
 
   // FILTERS
   // ACTIVE/INACTIVE
@@ -146,9 +149,11 @@ function Suppliers() {
   // ACTIVATE/DEACTIVATE
   const toggleActive = async (row) => {
     try {
-      await activateSupplier(row.id);
+      const res = await activateSupplier(row.id);
       await fetchSuppliers();
+      showToast(res, "success");
     } catch (error) {
+      showToast(error);
       console.error("Error activating supplier:", error);
     }
   };

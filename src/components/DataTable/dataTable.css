@@ -1,9 +1,9 @@
 :root {
   --primary: #4f27ee;
   --hover: #3c1cbb;
-  --view: #879ffc;
   --edit: rgb(255, 204, 0);
   --delete: #eb6972;
+  /* --delete: #879ffc; */
   --gray-l: #d9d9d9;
   --gray-m: #a8a8a8;
 }

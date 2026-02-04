@@ -1,408 +1,239 @@
-import "./customerForm.css";
-import { useState } from "react";
-import api from "../../api/axios";
-import SuccessPopup from "../Modals/SuccessPopup.jsx";
+import "./preview.css";
+import { FaPowerOff } from "react-icons/fa6";
+import { FaEdit } from "react-icons/fa";
 
-function CustomerForm({ onClose }) {
-  // FRONT ERRORS
-  const [errors, setErrors] = useState({});
+import { useEffect, useState } from "react";
+import { getSupplierById } from "../../services/suppliers.service.js";
+import { FaXmark } from "react-icons/fa6";
+import { FaBox } from "react-icons/fa";
+import { componentColumns } from "../../configs/componentTable.config.jsx";
+import {
+  getComponentsBySupplierId,
+  getComponentById,
+  activateComponent,
+} from "../../services/component.service.js";
 
-  // BACK ERRORS & SUCCESS
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+// TABLE
+import TableToolbar from "../TableToolbar.jsx";
+import DataTable from "../DataTable/DataTable.jsx";
+import TableFooter from "../TableFooter.jsx";
 
-  const [form, setForm] = useState({
-    client: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-    },
-    address: {
-      postal_code: "",
-      street: "",
-      municipality: "",
-      number: "",
-      portal: "",
-      floor: "",
-      door: "",
-    },
-    province: { name: "" },
+import LoadingOverlay from "../../components/ui/LoadingOverlay";
+
+import AddBtn from "../addBtn.jsx";
+
+function SupplierPreview({ supplierId, onClose }) {
+  // BBDD
+  const [components, setComponents] = useState([]);
+
+  // PAGINATION
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  // const [total, setTotal] = useState(0);
+  const limit = 5;
+
+  //FILTERS
+  // ACTIVE/INACTIVE
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // SORTING
+  // NAME && LASTNAME
+  const [sort, setSort] = useState({
+    field: "name",
+    order: "asc",
   });
 
-  const updateForm = (section, field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value,
-      },
-    }));
-  };
+  const [supplier, setSupplier] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // VALIDATIONS
-  const validateForm = () => {
-    const newErrors = {};
-
-    // ───── CLIENT ─────
-    if (!form.client.firstName.trim()) {
-      newErrors.firstName = "First name is required";
-    } else if (form.client.firstName.trim().length < 3) {
-      newErrors.firstName = "First name must be at least 3 characters";
-    } else if (
-      !/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+$/.test(form.client.firstName.trim())
-    ) {
-      newErrors.firstName = "First name can only contain letters";
-    }
-
-    if (!form.client.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
-    } else if (form.client.lastName.trim().length < 3) {
-      newErrors.lastName = "Last name must be at least 3 characters";
-    } else if (
-      !/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+$/.test(form.client.lastName.trim())
-    ) {
-      newErrors.lastName = "Last name can only contain letters";
-    }
-
-    if (!form.client.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.client.email.trim())) {
-      newErrors.email = "Invalid email format";
-    }
-
-    if (!form.client.phone.trim()) {
-      newErrors.phone = "Phone is required";
-    } else if (!/^\+?\d{9,12}$/.test(form.client.phone.trim())) {
-      newErrors.phone = "Phone must be between 9 and 12 digits";
-    }
-
-    // ───── PROVINCE ─────
-    if (!form.province.name.trim()) {
-      newErrors.province = "Province is required";
-    } else if (form.province.name.trim().length < 3) {
-      newErrors.province = "Province must be at least 3 characters";
-    } else if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+$/.test(form.province.name.trim())) {
-      newErrors.province = "Province can only contain letters";
-    }
-
-    // ───── ADDRESS ─────
-    if (!form.address.postal_code.trim()) {
-      newErrors.postal_code = "Postal code is required";
-    } else if (!/^[0-9]{5}$/.test(form.address.postal_code.trim())) {
-      newErrors.postal_code = "Postal code must have 5 digits";
-    }
-
-    if (!form.address.street.trim()) {
-      newErrors.street = "Street is required";
-    } else if (form.address.street.trim().length < 3) {
-      newErrors.street = "Street must be at least 3 characters";
-    } else if (
-      !/^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ\s]+$/.test(form.address.street.trim())
-    ) {
-      newErrors.street = "Street can only contain letters and numbers";
-    }
-
-    if (!form.address.municipality.trim()) {
-      newErrors.municipality = "Municipality is required";
-    } else if (form.address.municipality.trim().length < 3) {
-      newErrors.municipality = "Municipality must be at least 3 characters";
-    } else if (
-      !/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+$/.test(form.address.municipality.trim())
-    ) {
-      newErrors.municipality = "Municipality can only contain letters";
-    }
-
-    if (!form.address.number.trim()) {
-      newErrors.number = "Street number is required";
-    } else if (!/^[0-9]+$/.test(form.address.number.trim())) {
-      newErrors.number = "Street number can only contain numbers";
-    }
-
-    if (form.address.portal) {
-      if (form.address.portal.trim().length < 1) {
-        newErrors.portal = "Portal must be at least 1 character";
-      } else if (!/^[A-Za-z0-9]+$/.test(form.address.portal.trim())) {
-        newErrors.portal = "Portal can only contain letters and numbers";
-      }
-    }
-
-    if (form.address.floor) {
-      if (form.address.floor.trim().length < 1) {
-        newErrors.floor = "Floor must be at least 1 character";
-      } else if (!/^[A-Za-z0-9]+$/.test(form.address.floor.trim())) {
-        newErrors.floor = "Floor can only contain letters and numbers";
-      }
-    }
-
-    if (form.address.door) {
-      if (form.address.door.trim().length < 1) {
-        newErrors.door = "Door must be at least 1 character";
-      } else if (!/^[A-Za-z0-9]+$/.test(form.address.door.trim())) {
-        newErrors.door = "Door can only contain letters and numbers";
-      }
-    }
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess(false);
-
-    if (!validateForm()) return;
-
+  const fetchSupplier = async () => {
     try {
-      const response = await api.post("/clients/full", form);
-      console.log("PAYLOAD FINAL", response);
-      setSuccess(true);
-
-      setForm({
-        client: {
-          firstName: "",
-          lastName: "",
-          email: "",
-          phone: "",
-        },
-        address: {
-          postal_code: "",
-          street: "",
-          municipality: "",
-          number: "",
-          portal: "",
-          floor: "",
-          door: "",
-        },
-        province: { name: "" },
-      });
+      const data = await getSupplierById(supplierId);
+      setSupplier(data);
     } catch (error) {
-      if (error.response?.data?.error) {
-        console.log("error");
-        setError(error.response.data.error);
-      } else {
-        setError("Unexpected error");
-      }
+      console.error("Error loading supplier preview:", error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const fetchComponents = async () => {
+    try {
+      setLoading(true);
+
+      const res = await getComponentsBySupplierId(supplierId, {
+        page,
+        limit,
+        status: statusFilter,
+        sort: sort.field,
+        order: sort.order,
+      });
+
+      const mappedComponents = res.data.map((c) => ({
+        id: c.id_component,
+        name: c.name,
+        price: c.price,
+        description: c.description,
+        supplier: c.supplier?.name ?? "-",
+        status: c.active ? "Active" : "Inactive",
+        active: c.active,
+      }));
+
+      setComponents(mappedComponents);
+      setPages(res.pages);
+      // setTotal(res.total);
+    } catch (error) {
+      console.log("Error loading components ", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!supplierId) return;
+    setSupplier(null);
+    setLoading(true);
+
+    fetchSupplier();
+    fetchComponents();
+  }, [page, statusFilter, sort, supplierId]);
+
+  // PREVIEW
+  // const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  // const [previewSupplierId, setPreviewSupplierId] = useState(null);
+
+  // const openPreview = (row) => {
+  //   console.log("OPEN PREVIEW ID:", row.id);
+
+  //   if (!row.id) return;
+  //   setPreviewSupplierId(row.id);
+  //   setIsPreviewOpen(true);
+  // };
+
+  // EDIT
+  // const openEdit = async (row) => {
+  //   try {
+  //     setFormMode("edit");
+  //     const fullSupplier = await getSupplierById(row.id);
+  //     setSelectedSupplier(fullSupplier);
+  //     setIsModalOpen(true);
+  //   } catch (error) {
+  //     console.error("Error fetching supplier details:", error);
+  //   }
+  // };
+
+  // ACTIVATE/DEACTIVATE
+  // const toggleActive = async (row) => {
+  //   try {
+  //     await activateSupplier(row.id);
+  //     await fetchSuppliers();
+  //   } catch (error) {
+  //     console.error("Error activating supplier:", error);
+  //   }
+  // };
+
+  const suppliersActions = (row) => {
+    return (
+      <div className="table-actions">
+        <FaEdit
+          size={20}
+          className="table-actions__icon icon-edit"
+          title="Edit"
+          onClick={(e) => {
+            e.stopPropagation();
+            openEdit(row);
+          }}
+        />
+        <FaPowerOff
+          size={20}
+          className="table-actions__icon icon-delete"
+          title="Activate/Deactivate"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleActive(row);
+          }}
+        />
+      </div>
+    );
+  };
+
+  if (!supplierId) return null;
+
+  if (loading || !supplier) {
+    return <LoadingOverlay />;
+  }
 
   return (
-    <form className="customer-form" onSubmit={handleSubmit}>
-      {/* ───────────── CLIENT INFO ───────────── */}
-      <section className="form-section">
-        <h3>Customer information</h3>
+    <div className="preview-overlay" onClick={onClose}>
+      <aside className="preview" onClick={(e) => e.stopPropagation()}>
+        <header className="preview-header">
+          <h2>{supplier.name} - Components</h2>
+          <FaXmark className="preview-close" onClick={onClose} />
+        </header>
+        <div className="products-preview__container">
+          <AddBtn
+            icon={FaBox}
+            action="Add Product"
+            description="Register a new componentx"
+            onClick={() => {
+              setFormMode("create");
+              setSelectedSupplier(null);
+              setIsModalOpen(true);
+            }}
+            iconColor="#FF7621"
+            iconBgColor="#f387447d"
+          />
 
-        <div className="form-grid">
-          <div className="form-field">
-            <label>First name</label>
-            <input
-              type="text"
-              placeholder="John"
-              value={form.client.firstName}
-              onChange={(e) =>
-                updateForm("client", "firstName", e.target.value)
-              }
-              className={errors.firstName ? "input-error" : ""}
+          <div className="table-container">
+            <LoadingOverlay value={loading} text="Loading Products..." />
+            {/* TOP TOOLBAR */}
+            <TableToolbar
+              placeholder="Search by name or email"
+              filters={[
+                {
+                  key: "status",
+                  type: "select",
+                  value: statusFilter,
+                  onChange: (value) => {
+                    setPage(1);
+                    setStatusFilter(value);
+                  },
+                  options: [
+                    { label: "All", value: "all" },
+                    { label: "Active", value: "active" },
+                    { label: "Inactive", value: "inactive" },
+                  ],
+                },
+              ]}
+              onSort={() => {
+                setPage(1);
+                setSort((prev) => ({
+                  field: "name",
+                  order: prev.order === "asc" ? "desc" : "asc",
+                }));
+              }}
+              sortOrder={sort.order}
             />
-            {errors.firstName && (
-              <small className="form-field-error">{errors.firstName}</small>
-            )}
-          </div>
 
-          <div className="form-field">
-            <label>Last name</label>
-            <input
-              type="text"
-              placeholder="Doe"
-              value={form.client.lastName}
-              className={errors.lastName ? "input-error" : ""}
-              onChange={(e) => updateForm("client", "lastName", e.target.value)}
+            {/* TABLE */}
+            <DataTable
+              columns={componentColumns}
+              data={components}
+              onRowClick={(row) => openPreview(row.original ?? row)}
+              actions={suppliersActions}
             />
-            {errors.lastName && (
-              <small className="form-field-error">{errors.lastName}</small>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="john@company.com"
-              value={form.client.email}
-              className={errors.email ? "input-error" : ""}
-              onChange={(e) => updateForm("client", "email", e.target.value)}
+            {/* FOOTER */}
+            <TableFooter
+              page={page}
+              totalPages={pages}
+              total={components.length}
+              onPageChange={(newPage) => setPage(newPage)}
             />
-            {errors.email && (
-              <small className="form-field-error">{errors.email}</small>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label>Phone</label>
-            <input
-              type="text"
-              placeholder="+34 600 000 000"
-              value={form.client.phone}
-              className={errors.phone ? "input-error" : ""}
-              onChange={(e) => updateForm("client", "phone", e.target.value)}
-            />
-            {errors.phone && (
-              <small className="form-field-error">{errors.phone}</small>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ───────────── ADDRESS ───────────── */}
-      <section className="form-section">
-        <h3>Address</h3>
-
-        <div className="form-grid">
-          <div className="form-field">
-            <label>Province</label>
-            <input
-              type="text"
-              placeholder="Madrid"
-              value={form.province.name}
-              className={errors.province ? "input-error" : ""}
-              onChange={(e) => updateForm("province", "name", e.target.value)}
-            />
-            {errors.province && (
-              <small className="form-field-error">{errors.province}</small>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label>Postal code</label>
-            <input
-              type="text"
-              placeholder="28001"
-              value={form.address.postal_code}
-              className={errors.postal_code ? "input-error" : ""}
-              onChange={(e) =>
-                updateForm("address", "postal_code", e.target.value)
-              }
-            />
-            {errors.postal_code && (
-              <small className="form-field-error">{errors.postal_code}</small>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label>Street</label>
-            <input
-              type="text"
-              placeholder="Main street"
-              value={form.address.street}
-              className={errors.street ? "input-error" : ""}
-              onChange={(e) => updateForm("address", "street", e.target.value)}
-            />
-            {errors.street && (
-              <small className="form-field-error">{errors.street}</small>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label>Municipality</label>
-            <input
-              type="text"
-              placeholder="S.S de los Reyes"
-              value={form.address.municipality}
-              className={errors.municipality ? "input-error" : ""}
-              onChange={(e) =>
-                updateForm("address", "municipality", e.target.value)
-              }
-            />
-            {errors.municipality && (
-              <small className="form-field-error">{errors.municipality}</small>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label>Number</label>
-            <input
-              type="text"
-              placeholder="12"
-              value={form.address.number}
-              className={errors.number ? "input-error" : ""}
-              onChange={(e) => updateForm("address", "number", e.target.value)}
-            />
-            {errors.number && (
-              <small className="form-field-error">{errors.number}</small>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label>Portal</label>
-            <input
-              type="text"
-              placeholder="Portal"
-              value={form.address.portal}
-              className={errors.portal ? "input-error" : ""}
-              onChange={(e) => updateForm("address", "portal", e.target.value)}
-            />
-            {errors.portal && (
-              <small className="form-field-error">{errors.portal}</small>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label>Floor</label>
-            <input
-              type="text"
-              placeholder="2"
-              value={form.address.floor}
-              className={errors.floor ? "input-error" : ""}
-              onChange={(e) => updateForm("address", "floor", e.target.value)}
-            />
-            {errors.floor && (
-              <small className="form-field-error">{errors.floor}</small>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label>Door</label>
-            <input
-              type="text"
-              placeholder="G"
-              value={form.address.door}
-              className={errors.door ? "input-error" : ""}
-              onChange={(e) => updateForm("address", "door", e.target.value)}
-            />
-            {errors.door && (
-              <small className="form-field-error">{errors.door}</small>
-            )}
           </div>
         </div>
-      </section>
-
-      {/* ───────────── ACTIONS ───────────── */}
-      <div className="form-actions">
-        {error && <div className="form-error">{error}</div>}
-        <div className="form-actions__btns">
-          <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancel
-          </button>
-
-          <button className="btn-primary" type="submit">
-            Save customer
-          </button>
-        </div>
-      </div>
-
-      <SuccessPopup
-        open={success}
-        title="Customer created"
-        message="The customer has been successfully created."
-        onClose={() => {
-          setSuccess(false);
-          onClose(); // cerrar el modal principal
-        }}
-      />
-    </form>
+      </aside>
+    </div>
   );
 }
 
-export default CustomerForm;
+export default SupplierPreview;
