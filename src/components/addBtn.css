@@ -14,6 +14,7 @@
   width: max-content;
   background-color: inherit;
   transition: 0.3s all;
+  background-color: white;
 }
 
 .addBtn-icon {
