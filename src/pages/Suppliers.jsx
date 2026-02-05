@@ -20,6 +20,7 @@ import CardTop from "../components/CardTop";
 import TableToolbar from "../components/TableToolbar.jsx";
 import DataTable from "../components/DataTable/DataTable";
 import { supplierColumns } from "../configs/supplierTable.config.jsx";
+import ConfirmPopup from "../components/Modals/ConfirmPopup.jsx";
 import TableFooter from "../components/TableFooter.jsx";
 
 // PREVIEW
@@ -59,6 +60,10 @@ function Suppliers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formMode, setFormMode] = useState("create");
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+
+  // CONFIRM POPUP
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingSupplier, setPendingSupplier] = useState(null);
 
   // FETCH SUPPLIERS
   const fetchSuppliers = async () => {
@@ -115,7 +120,12 @@ function Suppliers() {
           title="Activate/Deactivate"
           onClick={(e) => {
             e.stopPropagation();
-            toggleActive(row);
+            if (row.active) {
+              setPendingSupplier(row);
+              setShowConfirm(true);
+            } else {
+              toggleActive(row);
+            }
           }}
         />
       </div>
@@ -158,9 +168,29 @@ function Suppliers() {
     }
   };
 
+  const handleConfirmDeactivate = async () => {
+    if (pendingSupplier) {
+      await toggleActive(pendingSupplier);
+      setPendingSupplier(null);
+      setShowConfirm(false);
+    }
+  };
+
   // TODO: Change name to reuse css
   return (
     <div className="customers-container">
+      <ConfirmPopup
+        open={showConfirm}
+        title="Confirm Deactivation"
+        message="This supplier has active products. Are you sure you want to deactivate it?"
+        onConfirm={handleConfirmDeactivate}
+        onCancel={() => {
+          setShowConfirm(false);
+          setPendingSupplier(null);
+        }}
+        confirmText="Deactivate"
+        cancelText="Cancel"
+      />
       <div className="container-top">
         <div className="container-title">
           <h1>Suppliers</h1>
@@ -203,7 +233,7 @@ function Suppliers() {
         />
       </div>
 
-      <div className="table-container table-dark">
+      <div className="table-container">
         <LoadingOverlay visible={loading} text="Loading suppliers..." />
         {/* TOP TOOLBAR */}
         <TableToolbar

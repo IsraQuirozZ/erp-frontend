@@ -1,7 +1,7 @@
 import "./preview.css";
 import { useEffect, useState, useRef } from "react";
 import { IoIosCloseCircle } from "react-icons/io";
-import { FaEdit, FaBox } from "react-icons/fa";
+import { FaEdit, FaBox, FaShoppingCart } from "react-icons/fa";
 import { FaPowerOff } from "react-icons/fa6";
 import { useToast } from "../ui/Toast.jsx";
 
@@ -23,8 +23,10 @@ import DataTable from "../DataTable/DataTable.jsx";
 import TableFooter from "../TableFooter.jsx";
 import LoadingOverlay from "../../components/ui/LoadingOverlay";
 import AddBtn from "../addBtn.jsx";
+import { useNavigate } from "react-router-dom";
 
 function SupplierPreview({ supplierId, onClose }) {
+  const navigate = useNavigate();
   const [closing, setClosing] = useState(false);
   const asideRef = useRef(null);
   const { showToast } = useToast();
@@ -188,11 +190,13 @@ function SupplierPreview({ supplierId, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="preview__header">
-          <h2>{supplier ? `${supplier.name} - Components` : "Loading..."}</h2>
+          <h2>{supplier ? `${supplier.name} - Products` : "Loading..."}</h2>
+        </div>
+        <div className="preview__header-actions">
           <AddBtn
             icon={FaBox}
             action="Add Product"
-            description="Register a new component"
+            description="Register a new product"
             onClick={() => {
               setFormMode("create");
               setSelectedComponent(null);
@@ -201,6 +205,18 @@ function SupplierPreview({ supplierId, onClose }) {
             iconColor="#FF7621"
             iconBgColor="#f387447d"
           />
+          {components.some((component) => component.active) && (
+            <AddBtn
+              icon={FaShoppingCart}
+              action="Create Order"
+              description="Generate a new order"
+              onClick={() => {
+                navigate("/app/purchases", { state: { supplierId } });
+              }}
+              iconColor="#6c89ff"
+              iconBgColor="#6c89ff81"
+            />
+          )}
         </div>
 
         {/* si no hac omponentes mostrar un mensaje, si hay mostrar div className="table-container" */}

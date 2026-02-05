@@ -35,11 +35,18 @@
 
 /* HEADER */
 .preview__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 1.5rem;
+  /* padding-bottom: 1.5rem; */
   border-bottom: 1px solid var(--gray-l);
+}
+
+.preview__header-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+.preview__header-actions .addBtn {
+  width: 280px;
 }
 
 .close-btn {
