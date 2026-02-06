@@ -1,239 +1,215 @@
 import "./preview.css";
-import { FaPowerOff } from "react-icons/fa6";
-import { FaEdit } from "react-icons/fa";
-
-import { useEffect, useState } from "react";
-import { getSupplierById } from "../../services/suppliers.service.js";
-import { FaXmark } from "react-icons/fa6";
-import { FaBox } from "react-icons/fa";
-import { componentColumns } from "../../configs/componentTable.config.jsx";
-import {
-  getComponentsBySupplierId,
-  getComponentById,
-  activateComponent,
-} from "../../services/component.service.js";
-
-// TABLE
-import TableToolbar from "../TableToolbar.jsx";
-import DataTable from "../DataTable/DataTable.jsx";
-import TableFooter from "../TableFooter.jsx";
-
-import LoadingOverlay from "../../components/ui/LoadingOverlay";
-
+import { useEffect, useState, useRef } from "react";
+import { IoIosCloseCircle } from "react-icons/io";
 import AddBtn from "../addBtn.jsx";
+import FormModal from "../Modals/FormModal.jsx";
+import LoadingOverlay from "../ui/LoadingOverlay";
+import { useToast } from "../ui/Toast.jsx";
 
-function SupplierPreview({ supplierId, onClose }) {
-  // BBDD
-  const [components, setComponents] = useState([]);
+// TODO: Import services for orders, items, suppliers, products
 
-  // PAGINATION
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  // const [total, setTotal] = useState(0);
-  const limit = 5;
-
-  //FILTERS
-  // ACTIVE/INACTIVE
-  const [statusFilter, setStatusFilter] = useState("all");
-
-  // SORTING
-  // NAME && LASTNAME
-  const [sort, setSort] = useState({
-    field: "name",
-    order: "asc",
+function OrderPreview({ orderId, supplierId, onClose }) {
+  // States
+  const [supplier, setSupplier] = useState(null);
+  const [supplierSearch, setSupplierSearch] = useState("");
+  const [supplierOptions, setSupplierOptions] = useState([]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [addingItem, setAddingItem] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [newItem, setNewItem] = useState({
+    product: "",
+    quantity: 1,
+    price: 0,
+    tax: 0,
+    discount: 0,
   });
 
-  const [supplier, setSupplier] = useState(null);
-  const [loading, setLoading] = useState(false);
+  // Layout
+  const asideRef = useRef(null);
+  const { showToast } = useToast();
 
-  const fetchSupplier = async () => {
-    try {
-      const data = await getSupplierById(supplierId);
-      setSupplier(data);
-    } catch (error) {
-      console.error("Error loading supplier preview:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchComponents = async () => {
-    try {
-      setLoading(true);
-
-      const res = await getComponentsBySupplierId(supplierId, {
-        page,
-        limit,
-        status: statusFilter,
-        sort: sort.field,
-        order: sort.order,
-      });
-
-      const mappedComponents = res.data.map((c) => ({
-        id: c.id_component,
-        name: c.name,
-        price: c.price,
-        description: c.description,
-        supplier: c.supplier?.name ?? "-",
-        status: c.active ? "Active" : "Inactive",
-        active: c.active,
-      }));
-
-      setComponents(mappedComponents);
-      setPages(res.pages);
-      // setTotal(res.total);
-    } catch (error) {
-      console.log("Error loading components ", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Fetch suppliers for dropdown
   useEffect(() => {
-    if (!supplierId) return;
-    setSupplier(null);
-    setLoading(true);
+    // TODO: fetch suppliers matching supplierSearch
+    // setSupplierOptions([...]);
+  }, [supplierSearch]);
 
-    fetchSupplier();
-    fetchComponents();
-  }, [page, statusFilter, sort, supplierId]);
+  // Fetch order/items if orderId exists
+  useEffect(() => {
+    // TODO: fetch order and items
+  }, [orderId]);
 
-  // PREVIEW
-  // const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  // const [previewSupplierId, setPreviewSupplierId] = useState(null);
-
-  // const openPreview = (row) => {
-  //   console.log("OPEN PREVIEW ID:", row.id);
-
-  //   if (!row.id) return;
-  //   setPreviewSupplierId(row.id);
-  //   setIsPreviewOpen(true);
-  // };
-
-  // EDIT
-  // const openEdit = async (row) => {
-  //   try {
-  //     setFormMode("edit");
-  //     const fullSupplier = await getSupplierById(row.id);
-  //     setSelectedSupplier(fullSupplier);
-  //     setIsModalOpen(true);
-  //   } catch (error) {
-  //     console.error("Error fetching supplier details:", error);
-  //   }
-  // };
-
-  // ACTIVATE/DEACTIVATE
-  // const toggleActive = async (row) => {
-  //   try {
-  //     await activateSupplier(row.id);
-  //     await fetchSuppliers();
-  //   } catch (error) {
-  //     console.error("Error activating supplier:", error);
-  //   }
-  // };
-
-  const suppliersActions = (row) => {
+  // Calculate subtotal for each item
+  const calcSubtotal = (item) => {
     return (
-      <div className="table-actions">
-        <FaEdit
-          size={20}
-          className="table-actions__icon icon-edit"
-          title="Edit"
-          onClick={(e) => {
-            e.stopPropagation();
-            openEdit(row);
-          }}
-        />
-        <FaPowerOff
-          size={20}
-          className="table-actions__icon icon-delete"
-          title="Activate/Deactivate"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleActive(row);
-          }}
-        />
-      </div>
-    );
+      Number(item.price) * Number(item.quantity) +
+      Number(item.tax) -
+      Number(item.discount)
+    ).toFixed(2);
   };
 
-  if (!supplierId) return null;
+  // Add new item to list
+  const handleAddItem = () => {
+    setItems([...items, { ...newItem, subtotal: calcSubtotal(newItem) }]);
+    setNewItem({ product: "", quantity: 1, price: 0, tax: 0, discount: 0 });
+    setAddingItem(false);
+  };
 
-  if (loading || !supplier) {
-    return <LoadingOverlay />;
-  }
+  // Total order
+  const orderTotal = items
+    .reduce((sum, item) => sum + Number(item.subtotal), 0)
+    .toFixed(2);
+
+  // When closing animation ends, call onClose
+  useEffect(() => {
+    if (!closing) return;
+    const aside = asideRef.current;
+    if (!aside) return;
+    const handleAnimationEnd = () => {
+      onClose();
+    };
+    aside.addEventListener("animationend", handleAnimationEnd);
+    return () => aside.removeEventListener("animationend", handleAnimationEnd);
+  }, [closing, onClose]);
 
   return (
     <div className="preview-overlay" onClick={onClose}>
-      <aside className="preview" onClick={(e) => e.stopPropagation()}>
-        <header className="preview-header">
-          <h2>{supplier.name} - Components</h2>
-          <FaXmark className="preview-close" onClick={onClose} />
-        </header>
-        <div className="products-preview__container">
-          <AddBtn
-            icon={FaBox}
-            action="Add Product"
-            description="Register a new componentx"
-            onClick={() => {
-              setFormMode("create");
-              setSelectedSupplier(null);
-              setIsModalOpen(true);
-            }}
-            iconColor="#FF7621"
-            iconBgColor="#f387447d"
+      <aside
+        ref={asideRef}
+        className={`preview${closing ? " slide-out" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="preview__header">
+          <h2>Order Preview</h2>
+          <button className="close-btn" onClick={onClose}>
+            <IoIosCloseCircle size={40} />
+          </button>
+        </div>
+        <div className="preview__header-actions">
+          {/* Supplier search input */}
+          <input
+            type="text"
+            placeholder="Search supplier by name or email"
+            value={supplierSearch}
+            onChange={(e) => setSupplierSearch(e.target.value)}
+            style={{ width: 280, marginRight: 12 }}
           />
-
-          <div className="table-container">
-            <LoadingOverlay value={loading} text="Loading Products..." />
-            {/* TOP TOOLBAR */}
-            <TableToolbar
-              placeholder="Search by name or email"
-              filters={[
-                {
-                  key: "status",
-                  type: "select",
-                  value: statusFilter,
-                  onChange: (value) => {
-                    setPage(1);
-                    setStatusFilter(value);
-                  },
-                  options: [
-                    { label: "All", value: "all" },
-                    { label: "Active", value: "active" },
-                    { label: "Inactive", value: "inactive" },
-                  ],
-                },
-              ]}
-              onSort={() => {
-                setPage(1);
-                setSort((prev) => ({
-                  field: "name",
-                  order: prev.order === "asc" ? "desc" : "asc",
-                }));
-              }}
-              sortOrder={sort.order}
-            />
-
-            {/* TABLE */}
-            <DataTable
-              columns={componentColumns}
-              data={components}
-              onRowClick={(row) => openPreview(row.original ?? row)}
-              actions={suppliersActions}
-            />
-            {/* FOOTER */}
-            <TableFooter
-              page={page}
-              totalPages={pages}
-              total={components.length}
-              onPageChange={(newPage) => setPage(newPage)}
-            />
+          {/* Dropdown options (mock) */}
+          {supplierOptions.length > 0 && (
+            <div className="dropdown">
+              {supplierOptions.map((opt) => (
+                <div key={opt.id} onClick={() => setSupplier(opt)}>
+                  {opt.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="preview-content">
+          {/* Items table */}
+          <table style={{ width: "100%", marginBottom: 16 }}>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Tax</th>
+                <th>Discount</th>
+                <th>Subtotal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, idx) => (
+                <tr key={idx}>
+                  <td>{item.product}</td>
+                  <td>{item.quantity}</td>
+                  <td>{item.price}</td>
+                  <td>{item.tax}</td>
+                  <td>{item.discount}</td>
+                  <td>{item.subtotal}</td>
+                  <td>
+                    <button
+                      onClick={() =>
+                        setItems(items.filter((_, i) => i !== idx))
+                      }
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {addingItem && (
+                <tr>
+                  <td>
+                    <input
+                      type="text"
+                      placeholder="Product name"
+                      value={newItem.product}
+                      onChange={(e) =>
+                        setNewItem({ ...newItem, product: e.target.value })
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min={1}
+                      value={newItem.quantity}
+                      onChange={(e) =>
+                        setNewItem({ ...newItem, quantity: e.target.value })
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min={0}
+                      value={newItem.price}
+                      onChange={(e) =>
+                        setNewItem({ ...newItem, price: e.target.value })
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min={0}
+                      value={newItem.tax}
+                      onChange={(e) =>
+                        setNewItem({ ...newItem, tax: e.target.value })
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min={0}
+                      value={newItem.discount}
+                      onChange={(e) =>
+                        setNewItem({ ...newItem, discount: e.target.value })
+                      }
+                    />
+                  </td>
+                  <td>{calcSubtotal(newItem)}</td>
+                  <td>
+                    <button onClick={handleAddItem}>Add</button>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          <button onClick={() => setAddingItem(true)}>Add Item</button>
+          <div style={{ marginTop: 16, fontWeight: "bold" }}>
+            Total: {orderTotal} €
           </div>
         </div>
+        {/* Confirm/complete order button */}
+        <button style={{ marginTop: 24 }}>Confirm Order</button>
       </aside>
     </div>
   );
 }
 
-export default SupplierPreview;
+export default OrderPreview;
