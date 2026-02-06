@@ -11,6 +11,7 @@ import {
   getComponentById,
   activateComponent,
 } from "../../services/component.service.js";
+import { createSupplierOrder } from "../../services/supplierOrder.service.js";
 
 import { componentColumns } from "../../configs/componentTable.config.jsx";
 
@@ -46,7 +47,7 @@ function SupplierPreview({ supplierId, onClose }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sort, setSort] = useState({ field: "name", order: "asc" });
 
-  // LOADING SOLO PARA LA TABLA
+  // LOADING
   const [tableLoading, setTableLoading] = useState(false);
 
   // FETCH
@@ -182,6 +183,27 @@ function SupplierPreview({ supplierId, onClose }) {
     return () => aside.removeEventListener("animationend", handleAnimationEnd);
   }, [closing, onClose]);
 
+  const handleCreateOrder = async () => {
+    try {
+      const order = await createSupplierOrder({
+        id_supplier: supplierId,
+      });
+
+      showToast("Supplier order created successfully", "success");
+
+      navigate("/app/purchases", {
+        state: { supplierId, openPreview: true },
+      });
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error creating supplier order";
+
+      showToast(message, "error");
+    }
+  };
+
   return (
     <div className="preview-overlay" onClick={handleClose}>
       <aside
@@ -210,16 +232,13 @@ function SupplierPreview({ supplierId, onClose }) {
               icon={FaShoppingCart}
               action="Create Order"
               description="Generate a new order"
-              onClick={() => {
-                navigate("/app/purchases", { state: { supplierId } });
-              }}
+              onClick={handleCreateOrder}
               iconColor="#6c89ff"
               iconBgColor="#6c89ff81"
             />
           )}
         </div>
 
-        {/* si no hac omponentes mostrar un mensaje, si hay mostrar div className="table-container" */}
         {components.length === 0 ? (
           <p className="no-data-text">
             This Supplier does not have any products.

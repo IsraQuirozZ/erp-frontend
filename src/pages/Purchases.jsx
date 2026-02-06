@@ -2,8 +2,7 @@ import "../styles/pages.css";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 //ICONS
-import { FaEdit, FaBox, FaShoppingCart } from "react-icons/fa";
-import { FaPowerOff } from "react-icons/fa6";
+import { FaShoppingCart } from "react-icons/fa";
 
 // COMPONENTS
 import ConfirmPopup from "../components/Modals/ConfirmPopup.jsx";
@@ -11,7 +10,9 @@ import SuccessPopup from "../components/Modals/SuccessPopup.jsx";
 import AddBtn from "../components/addBtn";
 import DashboardCard from "../components/DashboardCard";
 import LoadingOverlay from "../components/ui/LoadingOverlay";
+import OrderPreview from "../components/previews/OrderPreview.jsx";
 import FormModal from "../components/Modals/FormModal.jsx";
+import SupplierSelectForm from "../components/Forms/SupplierSelectForm.jsx";
 // import PurchaseForm from "../components/Forms/PurchaseForm.jsx";
 import CardTop from "../components/CardTop";
 
@@ -30,7 +31,9 @@ const statusTransitions = {
     { label: "Confirm", next: "CONFIRMED", color: "#6c89ff" },
     { label: "Cancel", next: "CANCELLED", color: "#dc3545" },
   ],
-  CONFIRMED: [{ label: "Received", next: "RECEIVED", color: "#00c24e" }],
+  CONFIRMED: [
+    { label: "Mark as Received", next: "RECEIVED", color: "#00c24e" },
+  ],
   RECEIVED: [],
   CANCELLED: [],
 };
@@ -40,6 +43,7 @@ function Purchases() {
   const location = useLocation();
   // If coming from SupplierPreview, supplierId will be in state
   const supplierId = location.state?.supplierId || null;
+  const openPreviewFromSupplier = location.state?.openPreview || false;
 
   const [loading, setLoading] = useState(true);
 
@@ -98,6 +102,13 @@ function Purchases() {
   const [formMode, setFormMode] = useState("create");
   const [selectedPurchase, setSelectedPurchase] = useState(null);
 
+  // PREVIEW
+  const [isPreviewOpen, setIsPreviewOpen] = useState(openPreviewFromSupplier);
+  const [previewSupplierId, setPreviewSupplierId] = useState(
+    openPreviewFromSupplier ? supplierId : null,
+  );
+  const [previewOrderId, setPreviewOrderId] = useState(null);
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [pendingTransition, setPendingTransition] = useState(null);
@@ -151,11 +162,26 @@ function Purchases() {
     );
   };
 
-  // ...existing code...
-
   useEffect(() => {
     fetchPurchases();
   }, [page, statusFilter, sort, supplierId]);
+
+  // Reset openPreview state after opening modal
+  useEffect(() => {
+    if (openPreviewFromSupplier && isPreviewOpen) {
+      // Remove state from history so modal doesn't auto-open again
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [openPreviewFromSupplier, isPreviewOpen, navigate, location.pathname]);
+
+  const openPreview = (row) => {
+    console.log("OPEN PREVIEW ID:", row.id);
+
+    if (!row.id) return;
+    setPreviewSupplierId(row.id);
+    setIsPreviewOpen(true);
+    setPreviewOrderId(row.id);
+  };
 
   // Example: show a form to create order for supplierId, or a button to create from scratch
   return (
@@ -171,7 +197,10 @@ function Purchases() {
           action="New Order"
           description="Generate a new order"
           onClick={() => {
-            console.log("click!");
+            // setIsPreviewOpen(true);
+            // console.log("click!");
+            setFormMode("create");
+            setIsModalOpen(true);
           }}
           iconColor="#6c89ff"
           iconBgColor="#6c89ff81"
@@ -259,7 +288,7 @@ function Purchases() {
         <DataTable
           columns={purchaseColumns}
           data={purchases}
-          //   onRowClick={(row) => openPreview(row.original ?? row)}
+          onRowClick={(row) => openPreview(row.original ?? row)}
           actions={purchasesActions}
         />
 
@@ -272,21 +301,31 @@ function Purchases() {
         />
       </div>
 
-      {/* <FormModal
+      <FormModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={formMode === "create" ? "Create Order" : "Edit Order"}
       >
-        <SupplierForm
-          mode={formMode}
-          initialData={selectedPurchase}
+        <SupplierSelectForm
           onClose={() => setIsModalOpen(false)}
           onSuccess={async () => {
             setIsModalOpen(false);
             await fetchPurchases();
           }}
         />
-      </FormModal> */}
+      </FormModal>
+
+      {isPreviewOpen && (
+        <OrderPreview
+          orderId={previewOrderId}
+          supplierId={previewSupplierId}
+          onClose={() => {
+            setIsPreviewOpen(false);
+            setPreviewSupplierId(null);
+            setPreviewOrderId(null);
+          }}
+        />
+      )}
     </div>
   );
 }
