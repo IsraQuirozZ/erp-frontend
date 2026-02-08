@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FaShoppingCart } from "react-icons/fa";
 
 // COMPONENTS
+import { useToast } from "../components/ui/Toast";
 import ConfirmPopup from "../components/Modals/ConfirmPopup.jsx";
 import SuccessPopup from "../components/Modals/SuccessPopup.jsx";
 import AddBtn from "../components/addBtn";
@@ -39,6 +40,7 @@ const statusTransitions = {
 };
 
 function Purchases() {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   // If coming from SupplierPreview, supplierId will be in state
@@ -117,8 +119,10 @@ function Purchases() {
     try {
       await updateSupplierOrderStatus(row.id, nextStatus);
       await fetchPurchases();
+      showToast("Status updated successfully", "success");
     } catch (error) {
       console.error("Error updating order status", error);
+      showToast(error);
     }
   };
 
@@ -308,9 +312,17 @@ function Purchases() {
       >
         <SupplierSelectForm
           onClose={() => setIsModalOpen(false)}
-          onSuccess={async () => {
+          onSuccess={async (order) => {
             setIsModalOpen(false);
             await fetchPurchases();
+            if (order && order.id_supplier_order) {
+              setPreviewOrderId(order.id_supplier_order);
+              setPreviewSupplierId(order.id_supplier);
+              setIsPreviewOpen(true);
+              if (order.active) {
+                showToast("Order created successfully", "success");
+              }
+            }
           }}
         />
       </FormModal>

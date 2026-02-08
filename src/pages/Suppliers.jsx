@@ -182,7 +182,7 @@ function Suppliers() {
       <ConfirmPopup
         open={showConfirm}
         title="Confirm Deactivation"
-        message="This supplier has active products. Are you sure you want to deactivate it?"
+        message="All products will be deactivated. Are you sure you want to deactivate this supplier?"
         onConfirm={handleConfirmDeactivate}
         onCancel={() => {
           setShowConfirm(false);
