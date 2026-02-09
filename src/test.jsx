@@ -1,37 +1,32 @@
 import "../styles/pages.css";
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-
-// Icons
+import { useNavigate, useLocation } from "react-router-dom";
+//ICONS
 import { FaShoppingCart } from "react-icons/fa";
 
-// UI & hooks
+// COMPONENTS
 import { useToast } from "../components/ui/Toast";
-
-// Components
+import ConfirmPopup from "../components/Modals/ConfirmPopup.jsx";
+import SuccessPopup from "../components/Modals/SuccessPopup.jsx";
 import AddBtn from "../components/addBtn";
 import DashboardCard from "../components/DashboardCard";
 import LoadingOverlay from "../components/ui/LoadingOverlay";
-import ConfirmPopup from "../components/Modals/ConfirmPopup.jsx";
+import OrderPreview from "../components/previews/OrderPreview.jsx";
 import FormModal from "../components/Modals/FormModal.jsx";
 import SupplierSelectForm from "../components/Forms/SupplierSelectForm.jsx";
-import OrderPreview from "../components/previews/OrderPreview.jsx";
+// import PurchaseForm from "../components/Forms/PurchaseForm.jsx";
+import CardTop from "../components/CardTop";
 
-// Table
-import TableToolbar from "../components/TableToolbar.jsx";
-import DataTable from "../components/DataTable/DataTable";
-import TableFooter from "../components/TableFooter.jsx";
-import { purchaseColumns } from "../configs/purchaseTable.config.jsx";
-
-// Services
+// PURCHASES TABLE
 import {
   getSupplierOrders,
   updateSupplierOrderStatus,
 } from "../services/purchases.service.js";
+import { purchaseColumns } from "../configs/purchaseTable.config.jsx";
+import TableToolbar from "../components/TableToolbar.jsx";
+import DataTable from "../components/DataTable/DataTable";
+import TableFooter from "../components/TableFooter.jsx";
 
-/**
- * Allowed status transitions per order status
- */
 const statusTransitions = {
   PENDING: [
     { label: "Confirm", next: "CONFIRMED", color: "#6c89ff" },
@@ -45,46 +40,37 @@ const statusTransitions = {
 };
 
 function Purchases() {
+  const { showToast } = useToast();
+  const navigate = useNavigate();
   const location = useLocation();
+  // If coming from SupplierPreview, supplierId will be in state
+  const supplierId = location.state?.supplierId || null;
+  const openPreviewFromSupplier = location.state?.openPreview || false;
 
-  /* =======================
-     Table & data state
-  ======================== */
   const [loading, setLoading] = useState(true);
-  const [purchases, setPurchases] = useState([]);
 
-  // Pagination
+  // FILTERS
+  // ACTIVE/INACTIVE
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // SORTING
+  // NAME && LASTNAME
+  const [sort, setSort] = useState({
+    field: "name",
+    order: "asc",
+  });
+
+  //DB
+  const [purchases, setPurchases] = useState([]);
+  // PAGINATION
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const limit = 4;
 
-  // Filters & sorting
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sort, setSort] = useState({ field: "name", order: "asc" });
-
-  /* =======================
-     Modals & preview state
-  ======================== */
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-
-  const [previewOrderId, setPreviewOrderId] = useState(null);
-  const [previewSupplierId, setPreviewSupplierId] = useState(null);
-  const [orderStatus, setOrderStatus] = useState(null);
-
-  // Status confirmation
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [pendingOrder, setPendingOrder] = useState(null);
-  const [pendingTransition, setPendingTransition] = useState(null);
-
-  const { showToast } = useToast();
-  /* =======================
-     Data fetching
-  ======================== */
   const fetchPurchases = async () => {
     try {
       setLoading(true);
-
       const res = await getSupplierOrders({
         page,
         limit,
@@ -93,7 +79,7 @@ function Purchases() {
         order: sort.order,
       });
 
-      const mapped = res.data.map((p) => ({
+      const mappedPurchases = res.data.map((p) => ({
         id: p.id_supplier_order,
         order: p.id_supplier_order,
         supplier: p.supplier?.name ?? "-",
@@ -103,41 +89,46 @@ function Purchases() {
         status: p.status,
       }));
 
-      setPurchases(mapped);
+      setPurchases(mappedPurchases);
       setPages(res.pages);
+      setTotal(res.total);
     } catch (error) {
-      console.error("Error loading purchases", error);
+      console.log("Error loading purchases", error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchPurchases();
-  }, [page, statusFilter, sort]);
+  // OnClick
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formMode, setFormMode] = useState("create");
+  const [selectedPurchase, setSelectedPurchase] = useState(null);
 
-  /* =======================
-     Actions
-  ======================== */
-  const openPreview = (row) => {
-    if (!row?.id || !row?.supplierId) return;
+  // PREVIEW
+  const [isPreviewOpen, setIsPreviewOpen] = useState(openPreviewFromSupplier);
+  const [previewSupplierId, setPreviewSupplierId] = useState(
+    openPreviewFromSupplier ? supplierId : null,
+  );
+  const [previewOrderId, setPreviewOrderId] = useState(null);
 
-    setPreviewOrderId(row.id);
-    setOrderStatus(row.status);
-    setPreviewSupplierId(row.supplierId);
-    setIsPreviewOpen(true);
-  };
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState(null);
+  const [pendingTransition, setPendingTransition] = useState(null);
 
-  const handleStatusChange = async () => {
-    if (!pendingOrder || !pendingTransition) return;
-
+  const handleStatusChange = async (row, nextStatus) => {
     try {
-      await updateSupplierOrderStatus(pendingOrder.id, pendingTransition);
+      await updateSupplierOrderStatus(row.id, nextStatus);
       await fetchPurchases();
       showToast("Status updated successfully", "success");
     } catch (error) {
-      showToast(error, "error");
-    } finally {
+      console.error("Error updating order status", error);
+      showToast(error);
+    }
+  };
+
+  const confirmStatusChange = async () => {
+    if (pendingOrder && pendingTransition) {
+      await handleStatusChange(pendingOrder, pendingTransition);
       setShowConfirm(false);
       setPendingOrder(null);
       setPendingTransition(null);
@@ -146,7 +137,6 @@ function Purchases() {
 
   const purchasesActions = (row) => {
     const transitions = statusTransitions[row.status] || [];
-
     return (
       <div className="table-actions">
         {transitions.map((t) => (
@@ -161,6 +151,7 @@ function Purchases() {
               marginRight: 6,
               cursor: "pointer",
             }}
+            title={t.label}
             onClick={(e) => {
               e.stopPropagation();
               setPendingOrder(row);
@@ -175,29 +166,51 @@ function Purchases() {
     );
   };
 
-  /* =======================
-     Render
-  ======================== */
+  useEffect(() => {
+    fetchPurchases();
+  }, [page, statusFilter, sort, supplierId]);
+
+  // Reset openPreview state after opening modal
+  useEffect(() => {
+    if (openPreviewFromSupplier && isPreviewOpen) {
+      // Remove state from history so modal doesn't auto-open again
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [openPreviewFromSupplier, isPreviewOpen, navigate, location.pathname]);
+
+  const openPreview = (row) => {
+    console.log("OPEN PREVIEW ID:", row);
+
+    if (!row || !row.id || !row.supplierId) return;
+    setPreviewOrderId(row.id);
+    setPreviewSupplierId(row.supplierId);
+    setIsPreviewOpen(true);
+  };
+
+  // Example: show a form to create order for supplierId, or a button to create from scratch
   return (
     <div className="page-container">
-      {/* Page header */}
       <div className="container-top">
         <div className="container-title">
           <h1>Purchase Orders</h1>
-          <h4>Manage your purchase orders and supplier interactions.</h4>
+          <h4>Manage your purchase orders and track supplier interactions.</h4>
         </div>
 
         <AddBtn
           icon={FaShoppingCart}
           action="New Order"
           description="Generate a new order"
-          onClick={() => setIsFormOpen(true)}
+          onClick={() => {
+            // setIsPreviewOpen(true);
+            // console.log("click!");
+            setFormMode("create");
+            setIsModalOpen(true);
+          }}
           iconColor="#6c89ff"
           iconBgColor="#6c89ff81"
         />
       </div>
 
-      {/* Dashboard cards (static for now) */}
       <div className="dashboard-cards">
         <DashboardCard
           title="Total purchases"
@@ -229,21 +242,22 @@ function Purchases() {
         />
       </div>
 
-      {/* Status confirmation */}
       <ConfirmPopup
         open={showConfirm}
         title="Confirm Status Change"
-        message={`Change order #${pendingOrder?.order} to ${pendingTransition}?`}
-        onConfirm={handleStatusChange}
-        onCancel={() => setShowConfirm(false)}
+        message={`Are you sure you want to change the status of order #${pendingOrder?.order} to ${pendingTransition}?`}
+        onConfirm={confirmStatusChange}
+        onCancel={() => {
+          setShowConfirm(false);
+          setPendingOrder(null);
+          setPendingTransition(null);
+        }}
         confirmText="Confirm"
         cancelText="Cancel"
       />
-
-      {/* Table */}
       <div className="table-container">
         <LoadingOverlay visible={loading} text="Loading purchases..." />
-
+        {/* TOP TOOLBAR */}
         <TableToolbar
           placeholder="Search by name or email"
           filters={[
@@ -264,15 +278,17 @@ function Purchases() {
               ],
             },
           ]}
-          onSort={() =>
+          onSort={() => {
+            setPage(1);
             setSort((prev) => ({
               field: "name",
               order: prev.order === "asc" ? "desc" : "asc",
-            }))
-          }
+            }));
+          }}
           sortOrder={sort.order}
         />
 
+        {/* TABLE */}
         <DataTable
           columns={purchaseColumns}
           data={purchases}
@@ -280,46 +296,45 @@ function Purchases() {
           actions={purchasesActions}
         />
 
+        {/* FOOTER */}
         <TableFooter
           page={page}
           pages={pages}
           total={purchases.length}
-          onPageChange={setPage}
+          onPageChange={(newPage) => setPage(newPage)}
         />
       </div>
 
-      {/* Create order modal */}
       <FormModal
-        open={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        title="Create Order"
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={formMode === "create" ? "Create Order" : "Edit Order"}
       >
         <SupplierSelectForm
-          onClose={() => setIsFormOpen(false)}
+          onClose={() => setIsModalOpen(false)}
           onSuccess={async (order) => {
+            setIsModalOpen(false);
             await fetchPurchases();
-            if (order?.id_supplier_order) {
+            if (order && order.id_supplier_order) {
               setPreviewOrderId(order.id_supplier_order);
               setPreviewSupplierId(order.id_supplier);
               setIsPreviewOpen(true);
-              showToast("Order created successfully", "success");
+              if (order.active) {
+                showToast("Order created successfully", "success");
+              }
             }
-            setIsFormOpen(false);
           }}
         />
       </FormModal>
 
-      {/* Order preview */}
       {isPreviewOpen && (
         <OrderPreview
           orderId={previewOrderId}
-          orderStatus={orderStatus}
           supplierId={previewSupplierId}
           onClose={() => {
             setIsPreviewOpen(false);
-            setPreviewOrderId(null);
             setPreviewSupplierId(null);
-            fetchPurchases();
+            setPreviewOrderId(null);
           }}
         />
       )}

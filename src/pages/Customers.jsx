@@ -1,3 +1,5 @@
+import { useToast } from "../components/ui/Toast";
+import ConfirmPopup from "../components/Modals/ConfirmPopup.jsx";
 import AddBtn from "../components/addBtn";
 import DashboardCard from "../components/DashboardCard";
 
@@ -28,6 +30,8 @@ import { FaEdit } from "react-icons/fa";
 import "../styles/customers.css";
 
 function Customers() {
+  const { showToast } = useToast();
+
   //BBDD
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +57,8 @@ function Customers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formMode, setFormMode] = useState("create"); // "create" | "edit"
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingCustomer, setPendingCustomer] = useState(null);
 
   // FETCH CUSTOMERS
   const fetchCustomers = async () => {
@@ -104,7 +110,15 @@ function Customers() {
           size={20}
           className="table-actions__icon icon-delete"
           title="Activate/Deactivate"
-          onClick={() => toggleActive(row)}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (row.active) {
+              setPendingCustomer(row);
+              setShowConfirm(true);
+            } else {
+              toggleActive(row);
+            }
+          }}
         />
       </div>
     );
@@ -130,16 +144,37 @@ function Customers() {
   // ACTIVATE/DEACTIVATE
   const toggleActive = async (row) => {
     try {
-      await activateCustomer(row.id);
+      const res = await activateCustomer(row.id);
       await fetchCustomers();
+      showToast(res, "success");
     } catch (error) {
       console.error("Error activating customer:", error);
+      showToast("Error activating customer", "error");
     }
   };
 
+  const handleConfirmDeactivate = async () => {
+    if (pendingCustomer) {
+      await toggleActive(pendingCustomer);
+      setShowConfirm(false);
+      setPendingCustomer(null);
+    }
+  };
   // TODO: Change name to reuse css
   return (
     <div className="customers-container">
+      <ConfirmPopup
+        open={showConfirm}
+        title="Confirm Deactivation"
+        message="Are you sure you want to deactivate this customer?"
+        onConfirm={handleConfirmDeactivate}
+        onCancel={() => {
+          setShowConfirm(false);
+          setPendingCustomer(null);
+        }}
+        confirmText="Deactivate"
+        cancelText="Cancel"
+      />
       <div className="container-top">
         <div className="container-title">
           <h1>Customers</h1>
@@ -148,7 +183,7 @@ function Customers() {
         <AddBtn
           icon={FaUserGroup}
           action="Add Customer"
-          description="Register a new customer"
+          description="Create a new customer"
           onClick={() => {
             setFormMode("create");
             setSelectedCustomer(null);

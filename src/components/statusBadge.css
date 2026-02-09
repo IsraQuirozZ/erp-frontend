@@ -27,7 +27,7 @@
 }
 
 .status-badge.cancelled {
-  background: rgba(175, 156, 156, 0.2);
+  background: #de4a4a3e;
   color: #de4a4a;
   /* background-color: #fe2a382a;
   color: #fe2a38; */

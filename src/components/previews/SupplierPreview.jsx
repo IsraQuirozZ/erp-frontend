@@ -183,9 +183,10 @@ function SupplierPreview({ supplierId, onClose }) {
     return () => aside.removeEventListener("animationend", handleAnimationEnd);
   }, [closing, onClose]);
 
+  // TODO: If order already exist and status === PENDING, open that order instead of creating a new one
   const handleCreateOrder = async () => {
     try {
-      const order = await createSupplierOrder({
+      await createSupplierOrder({
         id_supplier: supplierId,
       });
 
