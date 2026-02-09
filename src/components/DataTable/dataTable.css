@@ -1,9 +1,9 @@
 :root {
   --primary: #4f27ee;
   --hover: #3c1cbb;
+  --apply: #4ade80;
   --edit: rgb(255, 204, 0);
   --delete: #eb6972;
-  /* --delete: #879ffc; */
   --gray-l: #d9d9d9;
   --gray-m: #a8a8a8;
 }
@@ -45,6 +45,9 @@
 
 .icon-edit:hover {
   color: var(--edit);
+}
+.icon-apply:hover {
+  color: var(--apply);
 }
 
 .icon-delete:hover {

@@ -1,77 +1,79 @@
-// export const orderItemsColumns = [
-//   {
-//     key: "product",
-//     label: "Product",
-//     render: (row) => <strong>{row.name}</strong>,
-//   },
-//   { key: "quantity", label: "Quantity" },
-//   { key: "price", label: "Price" },
-//   { key: "taxes", label: "Taxes" },
-//   { key: "discount", label: "Discount" },
-//   { key: "total", label: "Total" },
-// ];
-
-export const orderItemsColumns = ({ editingItems, onChange }) => [
+export const orderItemsColumns = ({ editingItems, onChange, isEditable }) => [
   {
     key: "name",
-    label: "Component",
+    label: "Product",
+    render: (row) => <strong>{row.name}</strong>,
   },
   {
     key: "quantity",
     label: "Qty",
     render: (row) => {
       const rowKey = `${row.id_supplier_order}-${row.id_component}`;
-      const edit = editingItems[rowKey];
+      const value = editingItems[rowKey]?.quantity ?? row.quantity;
 
       return (
         <div className="qty-edit">
-          <button
-            onClick={() =>
-              onChange(row, {
-                quantity: (edit?.quantity ?? row.quantity) - 1,
-              })
-            }
-          >
-            −
-          </button>
+          {isEditable && (
+            <button
+              type="button"
+              onClick={() =>
+                onChange(row, {
+                  quantity: Math.max(1, value - 1),
+                })
+              }
+            >
+              −
+            </button>
+          )}
 
           <input
             type="number"
             min={1}
-            value={edit?.quantity ?? row.quantity}
+            value={value}
+            disabled={!isEditable}
             onChange={(e) =>
-              onChange(row, { quantity: Number(e.target.value) })
+              onChange(row, {
+                quantity: Number(e.target.value),
+              })
             }
           />
 
-          <button
-            onClick={() =>
-              onChange(row, {
-                quantity: (edit?.quantity ?? row.quantity) + 1,
-              })
-            }
-          >
-            +
-          </button>
+          {isEditable && (
+            <button
+              type="button"
+              onClick={() =>
+                onChange(row, {
+                  quantity: value + 1,
+                })
+              }
+            >
+              +
+            </button>
+          )}
         </div>
       );
     },
   },
   {
     key: "unit_price",
-    label: "U.Price",
+    label: "U. Price",
     render: (row) => <span>{Number(row.unit_price).toFixed(2)} €</span>,
   },
   {
-    key: "taxes",
+    key: "tax",
     label: "Tax %",
     render: (row) => {
       const rowKey = `${row.id_supplier_order}-${row.id_component}`;
+      const value = editingItems[rowKey]?.tax ?? row.tax;
+
       return (
         <input
           type="number"
-          value={editingItems[rowKey]?.taxes ?? row.taxes ?? ""}
-          onChange={(e) => onChange(row, { taxes: Number(e.target.value) })}
+          min={0}
+          max={100}
+          value={value}
+          disabled={!isEditable}
+          onChange={(e) => onChange(row, { tax: Number(e.target.value) })}
         />
       );
     },
@@ -81,11 +83,20 @@ export const orderItemsColumns = ({ editingItems, onChange }) => [
     label: "Disc %",
     render: (row) => {
       const rowKey = `${row.id_supplier_order}-${row.id_component}`;
+      const value = editingItems[rowKey]?.discount ?? row.discount;
+
       return (
         <input
           type="number"
-          value={editingItems[rowKey]?.discount ?? row.discount ?? ""}
-          onChange={(e) => onChange(row, { discount: Number(e.target.value) })}
+          min={0}
+          max={100}
+          value={value}
+          disabled={!isEditable}
+          onChange={(e) =>
+            onChange(row, {
+              discount: Number(e.target.value),
+            })
+          }
         />
       );
     },
@@ -93,12 +104,6 @@ export const orderItemsColumns = ({ editingItems, onChange }) => [
   {
     key: "subtotal",
     label: "Subtotal",
-    render: (row) => {
-      const qty =
-        editingItems[`${row.id_supplier_order}-${row.id_component}`]
-          ?.quantity ?? row.quantity;
-
-      return (qty * row.unit_price).toFixed(2);
-    },
+    render: (row) => <span>{Number(row.subtotal).toFixed(2)} €</span>,
   },
 ];

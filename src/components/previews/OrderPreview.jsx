@@ -4,13 +4,13 @@ import { IoIosCloseCircle, IoIosAddCircle } from "react-icons/io";
 import { FaCheckCircle, FaTrash } from "react-icons/fa";
 
 import AddBtn from "../addBtn.jsx";
-import FormModal from "../Modals/FormModal.jsx";
 import LoadingOverlay from "../ui/LoadingOverlay";
 import { useToast } from "../ui/Toast.jsx";
 
 import {
   getOrderItems,
   createOrderItem,
+  updateOrderItem,
   deleteOrderItem,
 } from "../../services/supplierOrderItem.service.js";
 import { getComponentsBySupplierId } from "../../services/component.service.js";
@@ -19,14 +19,13 @@ import TableToolbar from "../TableToolbar.jsx";
 import DataTable from "../DataTable/DataTable.jsx";
 import TableFooter from "../TableFooter.jsx";
 
-// TODO: Import services for orders, items, suppliers, products
-
-function OrderPreview({ orderId, supplierId, onClose }) {
+function OrderPreview({ orderId, orderStatus, supplierId, onClose }) {
   // States for order, supplier, items, etc.
   const [closing, setClosing] = useState(false);
   const asideRef = useRef(null);
   const [editingItems, setEditingItems] = useState({});
   const [items, setItems] = useState([]);
+  const isEditable = orderStatus === "PENDING";
 
   const { showToast } = useToast();
 
@@ -157,14 +156,18 @@ function OrderPreview({ orderId, supplierId, onClose }) {
       });
       await fetchItems();
 
+      showToast(
+        `Item "${selectedComponent.name}" added successfully`,
+        "success",
+      );
       // SET INLINE ADD "FORM
       setQuery("");
       setSelectedComponent(null);
       setQuantity(1);
-      setTax("");
-      setDiscount("");
+      setTax(0);
+      setDiscount(0);
     } catch (error) {
-      showToast("Error adding item", "error");
+      showToast(error, "error");
       console.error("Error adding item", error);
     } finally {
       setTableLoading(false);
@@ -178,28 +181,45 @@ function OrderPreview({ orderId, supplierId, onClose }) {
     setEditingItems((prev) => ({
       ...prev,
       [key]: {
-        ...row,
-        ...prev[key],
+        quantity: prev[key]?.quantity ?? row.quantity,
+        tax: prev[key]?.tax ?? row.tax,
+        discount: prev[key]?.discount ?? row.discount,
         ...changes,
       },
     }));
   };
 
+  // HANDLE APPLY (SAVE) EDITS
   const handleApply = async (row) => {
     const key = `${row.id_supplier_order}-${row.id_component}`;
     const edited = editingItems[key];
 
-    console.log("APPLY TO BACKEND:", edited);
+    if (!edited) return;
 
-    // luego:
-    // await updateSupplierOrderItem(...)
-    // await fetchItems()
+    try {
+      setTableLoading(true);
 
-    setEditingItems((prev) => {
-      const copy = { ...prev };
-      delete copy[key];
-      return copy;
-    });
+      await updateOrderItem(row.id_supplier_order, row.id_component, {
+        id_supplier_order: row.id_supplier_order,
+        id_component: row.id_component,
+        quantity: edited.quantity.toString(),
+        tax: edited.tax,
+        discount: edited.discount,
+      });
+
+      await fetchItems();
+
+      showToast(`Item "${row.name}" updated successfully`, "success");
+      setEditingItems((prev) => {
+        const copy = { ...prev };
+        delete copy[key];
+        return copy;
+      });
+    } catch (error) {
+      showToast(error, "error");
+    } finally {
+      setTableLoading(false);
+    }
   };
 
   // DELETE ITEM
@@ -213,21 +233,22 @@ function OrderPreview({ orderId, supplierId, onClose }) {
       await fetchItems();
       showToast(res, "success");
     } catch (error) {
-      showToast("Error deleting item", "error");
+      showToast(error, "error");
     }
   };
 
   // Actions
   const itemsActions = (row) => {
+    if (!isEditable) return null;
     return (
       <div className="table-actions">
         <FaCheckCircle
           size={20}
-          className="table-actions__icon icon-edit"
+          className="table-actions__icon icon-apply"
           title="Apply"
           onClick={(e) => {
             e.stopPropagation();
-            openEdit(row);
+            handleApply(row);
           }}
         />
         <FaTrash
@@ -311,101 +332,124 @@ function OrderPreview({ orderId, supplierId, onClose }) {
             }}
             sortOrder={sort.order}
           />
+
           {/*  INLINE ADD ROW */}
-          <div className="inline-add-row">
-            {/* COMPONENT AUTOCOMPLETE */}
-            <div className="inline-field autocomplete" ref={autocompleteRef}>
-              <input
-                type="text"
-                placeholder="Search product..."
-                value={query}
-                onFocus={() => setShowDropdown(true)}
-                onClick={() => setShowDropdown(true)}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setSelectedComponent(null);
-                  setShowDropdown(true);
-                }}
-              />
-
-              {showDropdown && (
-                <div className="autocomplete-dropdown">
-                  {components
-                    .filter((c) =>
-                      c.name.toLowerCase().includes(query.toLowerCase()),
-                    )
-                    .map((c) => (
-                      <div
-                        key={c.id_component}
-                        className="autocomplete-item"
-                        onClick={() => {
-                          setSelectedComponent(c);
-                          setQuery(c.name);
-                          setShowDropdown(false);
-                        }}
-                      >
-                        {c.name}
-                      </div>
-                    ))}
+          {isEditable && (
+            <div className="inline-add-row">
+              {/* COMPONENT AUTOCOMPLETE */}
+              <div className="inline-field autocomplete" ref={autocompleteRef}>
+                <div className="inline-field">
+                  <small>Product</small>
+                  <input
+                    type="text"
+                    placeholder="Search product..."
+                    value={query}
+                    onFocus={() => setShowDropdown(true)}
+                    onClick={() => setShowDropdown(true)}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setSelectedComponent(null);
+                      setShowDropdown(true);
+                    }}
+                  />
                 </div>
-              )}
-            </div>
 
-            {/* QUANTITY */}
-            <div className="inline-field qty">
-              <button onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
-                −
-              </button>
-              <input
-                type="number"
-                min={1}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-              />
-              <button onClick={() => setQuantity((q) => q + 1)}>+</button>
-            </div>
+                {showDropdown && (
+                  <div className="autocomplete-dropdown">
+                    {components
+                      .filter((c) =>
+                        c.name.toLowerCase().includes(query.toLowerCase()),
+                      )
+                      .map((c) => (
+                        <div
+                          key={c.id_component}
+                          className="autocomplete-item"
+                          onClick={() => {
+                            setSelectedComponent(c);
+                            setQuery(c.name);
+                            setShowDropdown(false);
+                          }}
+                        >
+                          {c.name}
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
 
-            {/* UNIT PRICE */}
-            <div className="inline-field readonly">
-              {selectedComponent ? `${selectedComponent.price} €` : "—"}
-            </div>
+              {/* QUANTITY */}
+              <div className="inline-field">
+                <small>Quantity</small>
+                <div className="inline-field qty">
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                  />
+                  <button onClick={() => setQuantity((q) => q + 1)}>+</button>
+                </div>
+              </div>
 
-            {/* TAXES */}
-            <div className="inline-field">
-              <input
-                type="number"
-                placeholder="% Tax"
-                value={tax}
-                onChange={(e) => setTax(e.target.value)}
-              />
-            </div>
+              {/* UNIT PRICE */}
+              <div className="inline-field">
+                <small>U.Price</small>
+                <div className="inline-field readonly">
+                  {selectedComponent ? `${selectedComponent.price} €` : "—"}
+                </div>
+              </div>
 
-            {/* DISCOUNT */}
-            <div className="inline-field">
-              <input
-                type="number"
-                placeholder="% Disc"
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-              />
+              {/* TAXES */}
+              <div className="inline-field">
+                <small>Taxes</small>
+                <div className="inline-field">
+                  <input
+                    type="number"
+                    placeholder="% Tax"
+                    value={tax}
+                    onChange={(e) => setTax(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+
+              {/* DISCOUNT */}
+              <div className="inline-field">
+                <small>Discount</small>
+                <div className="inline-field">
+                  <input
+                    type="number"
+                    placeholder="% Disc"
+                    value={discount}
+                    onChange={(e) => setDiscount(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              {/* ADD ACTION */}
+              <div className="inline-field action">
+                <button
+                  className="btn-primary"
+                  disabled={!selectedComponent || quantity <= 0}
+                  onClick={handleAddItem}
+                >
+                  Add
+                </button>
+              </div>
             </div>
-            {/* ADD ACTION */}
-            <div className="inline-field action">
-              <button
-                className="btn-primary"
-                disabled={!selectedComponent || quantity <= 0}
-                onClick={handleAddItem}
-              >
-                Add
-              </button>
-            </div>
-          </div>
+          )}
+
+          {/* TABLE */}
           <DataTable
             columns={orderItemsColumns({
               editingItems,
               onChange: handleEditChange,
               onApply: handleApply,
               onDelete: handleDelete,
+              isEditable,
             })}
             data={items}
             actions={itemsActions}

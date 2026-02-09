@@ -15,8 +15,15 @@ export const createOrderItem = async (data) => {
   return res.data;
 };
 
-export const updateOrderItem = async (id, data) => {
-  const res = await api.put(`/supplier-order-items/${id}`, data);
+export const updateOrderItem = async (
+  id_supplier_order,
+  id_component,
+  data,
+) => {
+  const res = await api.put(
+    `/supplier-order-items/${id_supplier_order}/${id_component}`,
+    data,
+  );
   return res.data;
 };
 
