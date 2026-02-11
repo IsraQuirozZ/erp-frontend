@@ -10,6 +10,7 @@ import Dashboard from "../pages/Dashboard";
 import Customers from "../pages/Customers";
 import Suppliers from "../pages/Suppliers";
 import Purchases from "../pages/Purchases";
+import Inventory from "../pages/Inventory";
 
 function AppRouter() {
   return (
@@ -67,6 +68,14 @@ function AppRouter() {
               element={
                 <RequireRole allowedRoles={["ADMIN"]}>
                   <Purchases />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="inventory"
+              element={
+                <RequireRole allowedRoles={["ADMIN"]}>
+                  <Inventory />
                 </RequireRole>
               }
             />
