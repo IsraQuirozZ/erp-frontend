@@ -69,8 +69,6 @@ function Purchases() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const [previewOrderId, setPreviewOrderId] = useState(null);
-  const [previewSupplierId, setPreviewSupplierId] = useState(null);
-  const [orderStatus, setOrderStatus] = useState(null);
 
   // Status confirmation
   const [showConfirm, setShowConfirm] = useState(false);
@@ -123,8 +121,6 @@ function Purchases() {
     if (!row?.id || !row?.supplierId) return;
 
     setPreviewOrderId(row.id);
-    setOrderStatus(row.status);
-    setPreviewSupplierId(row.supplierId);
     setIsPreviewOpen(true);
   };
 
@@ -175,9 +171,6 @@ function Purchases() {
     );
   };
 
-  /* =======================
-     Render
-  ======================== */
   return (
     <div className="page-container">
       {/* Page header */}
@@ -300,7 +293,6 @@ function Purchases() {
             await fetchPurchases();
             if (order?.id_supplier_order) {
               setPreviewOrderId(order.id_supplier_order);
-              setPreviewSupplierId(order.id_supplier);
               setIsPreviewOpen(true);
               showToast("Order created successfully", "success");
             }
@@ -313,12 +305,9 @@ function Purchases() {
       {isPreviewOpen && (
         <OrderPreview
           orderId={previewOrderId}
-          orderStatus={orderStatus}
-          supplierId={previewSupplierId}
           onClose={() => {
             setIsPreviewOpen(false);
             setPreviewOrderId(null);
-            setPreviewSupplierId(null);
             fetchPurchases();
           }}
         />

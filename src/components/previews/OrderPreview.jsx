@@ -1,10 +1,11 @@
 import "./preview.css";
 import { useEffect, useState, useRef, use } from "react";
 import { IoIosCloseCircle, IoIosAddCircle } from "react-icons/io";
-import { FaCheckCircle, FaTrash } from "react-icons/fa";
+import { FaCheckCircle, FaTrash, FaEye } from "react-icons/fa";
 
 import AddBtn from "../addBtn.jsx";
 import LoadingOverlay from "../ui/LoadingOverlay";
+import InvoicePreview from "./InvoicePreview.jsx";
 import { useToast } from "../ui/Toast.jsx";
 
 import {
@@ -14,18 +15,44 @@ import {
   deleteOrderItem,
 } from "../../services/supplierOrderItem.service.js";
 import { getComponentsBySupplierId } from "../../services/component.service.js";
+import {
+  createSupplierInvoice,
+  updateInvoiceStatus,
+} from "../../services/invoice.service.js";
+import { getSupplierOrderById } from "../../services/supplierOrder.service.js";
 import { orderItemsColumns } from "../../configs/orderItemsTable.config.jsx";
 import TableToolbar from "../TableToolbar.jsx";
 import DataTable from "../DataTable/DataTable.jsx";
 import TableFooter from "../TableFooter.jsx";
 
-function OrderPreview({ orderId, orderStatus, supplierId, onClose }) {
-  // States for order, supplier, items, etc.
+const invoiceTransitions = {
+  DRAFT: [
+    { label: "Issue", next: "ISSUED", color: "#6c89ff" },
+    { label: "Cancel", next: "CANCELLED", color: "#dc3545" },
+  ],
+  ISSUED: [
+    { label: "Mark as Paid", next: "PAID", color: "#00c24e" },
+    { label: "Cancel", next: "CANCELLED", color: "#dc3545" },
+  ],
+  CANCELLED: [],
+  PAID: [],
+};
+
+function OrderPreview({ orderId, onClose }) {
+  // States for order, supplier, items, invoice.
+  const [order, setOrder] = useState(null);
+
   const [closing, setClosing] = useState(false);
   const asideRef = useRef(null);
   const [editingItems, setEditingItems] = useState({});
   const [items, setItems] = useState([]);
-  const isEditable = orderStatus === "PENDING";
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+
+  const isEditable = order?.status === "PENDING";
+  const invoice =
+    order?.invoices?.find((i) => i.status !== "CANCELLED") ||
+    order?.invoices?.[0] ||
+    null;
 
   const { showToast } = useToast();
 
@@ -38,7 +65,6 @@ function OrderPreview({ orderId, orderStatus, supplierId, onClose }) {
   const [sort, setSort] = useState({ field: "name", order: "asc" });
   const [tableLoading, setTableLoading] = useState(false);
 
-  //
   // Inline add item state
   const [components, setComponents] = useState([]);
   const [query, setQuery] = useState("");
@@ -48,6 +74,21 @@ function OrderPreview({ orderId, orderStatus, supplierId, onClose }) {
   const [quantity, setQuantity] = useState(1);
   const [tax, setTax] = useState(0);
   const [discount, setDiscount] = useState(0);
+
+  // FETCHING
+  const fetchOrder = async () => {
+    try {
+      const res = await getSupplierOrderById(orderId);
+      setOrder(res);
+    } catch (error) {
+      console.error("Error loading order:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!orderId) return;
+    fetchOrder();
+  }, [orderId]);
 
   const fetchItems = async () => {
     try {
@@ -88,7 +129,7 @@ function OrderPreview({ orderId, orderStatus, supplierId, onClose }) {
     try {
       setTableLoading(true);
 
-      const res = await getComponentsBySupplierId(supplierId, {
+      const res = await getComponentsBySupplierId(order.id_supplier, {
         page,
         limit,
         status: statusFilter,
@@ -119,9 +160,9 @@ function OrderPreview({ orderId, orderStatus, supplierId, onClose }) {
   };
 
   useEffect(() => {
-    if (!supplierId) return;
+    if (!order?.id_supplier) return;
     fetchComponents();
-  }, [supplierId]);
+  }, [order?.id_supplier]);
 
   const handleClose = () => {
     setClosing(true);
@@ -280,6 +321,28 @@ function OrderPreview({ orderId, orderStatus, supplierId, onClose }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // CREATE INVOICE
+  const handleCreateInvoice = async () => {
+    try {
+      await createSupplierInvoice(orderId);
+      await fetchOrder();
+      showToast("Invoice created successfully", "success");
+    } catch (error) {
+      showToast(error, "error");
+    }
+  };
+
+  // HANDLE UPDATE INVOICE STATUS
+  const handleInvoiceStatusChange = async (newStatus) => {
+    try {
+      await updateInvoiceStatus(invoice.id_supplier_invoice, newStatus);
+      await fetchOrder();
+      showToast("Invoice status updated", "success");
+    } catch (error) {
+      showToast(error, "error");
+    }
+  };
+
   return (
     <div className="preview-overlay" onClick={handleClose}>
       <aside
@@ -287,22 +350,90 @@ function OrderPreview({ orderId, orderStatus, supplierId, onClose }) {
         className={`preview${closing ? " slide-out" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="preview__header">
-          <h2>{!orderId ? "New Order" : `Order #${orderId} - Items`}</h2>
-          <h2>Supplier</h2>
+        <div className="preview__header-info">
+          <div className="order-info">
+            <div>
+              <strong>Order Number:</strong> {orderId || "—"}
+            </div>
+            {/* TODO: Show supplier name */}
+            <div>
+              <strong>Supplier:</strong> {order?.supplier?.name || "—"}
+            </div>
+            <div>
+              <strong>Warehouse:</strong> {order?.warehouse?.name || "—"}
+            </div>
+            {invoice ? (
+              <>
+                <div>
+                  <strong>Invoice Number:</strong> {invoice.invoice_number}
+                </div>
+                <div>
+                  <strong>Created Date:</strong>{" "}
+                  {invoice.created_at.split("T")[0]}
+                </div>
+                <div>
+                  <strong>Total:</strong> {invoice.total} €
+                </div>
+                <div className="invoice-options">
+                  <div
+                    className={`status status-${invoice.status.toLowerCase()}`}
+                  >
+                    {invoice.status}
+                  </div>
+
+                  {(invoiceTransitions[invoice.status] || []).map((t) => (
+                    <button
+                      key={t.next}
+                      style={{
+                        background: t.color,
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 4,
+                        padding: "4px 10px",
+                        cursor: "pointer",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleInvoiceStatusChange(t.next);
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <small>No invoice available</small>
+              </>
+            )}
+          </div>
+
+          <div className="preview__header-actions">
+            {!invoice || invoice.status === "CANCELLED" ? (
+              <AddBtn
+                icon={IoIosAddCircle}
+                action="Create Invoice"
+                description="Generate invoice"
+                onClick={() => {
+                  handleCreateInvoice();
+                }}
+                iconColor="#20C598"
+                iconBgColor="#20c59947"
+              />
+            ) : (
+              <AddBtn
+                icon={FaEye}
+                action="See Invoice"
+                description="View invoice details"
+                onClick={() => setShowInvoicePreview(true)}
+                iconColor="#20C598"
+                iconBgColor="#20c59947"
+              />
+            )}
+          </div>
         </div>
-        <div className="preview__header-actions">
-          <AddBtn
-            icon={IoIosAddCircle}
-            action="Add Item"
-            description="Add items to this order"
-            onClick={() => {
-              console.log("Add Item");
-            }}
-            iconColor="#6c89ff"
-            iconBgColor="#6c89ff81"
-          />
-        </div>
+
         <div className="table-container">
           <LoadingOverlay visible={tableLoading} text="Loading items..." />
           <TableToolbar
@@ -461,10 +592,23 @@ function OrderPreview({ orderId, orderStatus, supplierId, onClose }) {
             onPageChange={(newPage) => setPage(newPage)}
           />
         </div>
+        <div className="orderPreview__total">
+          <h4>TOTAL:</h4>
+          <h4>{order?.total}€</h4>
+        </div>
         <button className="close-btn" onClick={handleClose}>
           <IoIosCloseCircle size={50} />
         </button>
       </aside>
+
+      {showInvoicePreview && (
+        <InvoicePreview
+          invoice={invoice}
+          onClose={() => {
+            setShowInvoicePreview(false);
+          }}
+        />
+      )}
     </div>
   );
 }

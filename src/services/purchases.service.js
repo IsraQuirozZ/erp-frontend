@@ -10,7 +10,6 @@ export const getSupplierOrders = async ({
   const response = await api.get("/supplier-orders", {
     params: { page, limit, status, sort, order },
   });
-  console.log(response.data.data[0]);
 
   return response.data;
 };

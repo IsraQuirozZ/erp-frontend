@@ -135,7 +135,7 @@ function SupplierPreview({ supplierId, onClose }) {
       await fetchComponents();
       showToast(res, "success");
     } catch (error) {
-      showToast(error);
+      showToast(error, "error");
       console.error("Error activating component:", error);
     }
   };
@@ -183,7 +183,6 @@ function SupplierPreview({ supplierId, onClose }) {
     return () => aside.removeEventListener("animationend", handleAnimationEnd);
   }, [closing, onClose]);
 
-  // TODO: If order already exist and status === PENDING, open that order instead of creating a new one
   const handleCreateOrder = async () => {
     try {
       await createSupplierOrder({
@@ -201,7 +200,7 @@ function SupplierPreview({ supplierId, onClose }) {
         error?.message ||
         "Error creating supplier order";
 
-      showToast(message, "error");
+      showToast(error, "error");
     }
   };
 

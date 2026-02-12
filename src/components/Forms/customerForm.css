@@ -147,3 +147,13 @@
   font-size: 12px;
   color: #e54848;
 }
+
+.form-row {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.form-row .form-field {
+  flex: 1;
+}
