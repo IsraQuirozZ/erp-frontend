@@ -1,215 +1,148 @@
-import "./preview.css";
-import { useEffect, useState, useRef } from "react";
-import { IoIosCloseCircle } from "react-icons/io";
-import AddBtn from "../addBtn.jsx";
-import FormModal from "../Modals/FormModal.jsx";
-import LoadingOverlay from "../ui/LoadingOverlay";
-import { useToast } from "../ui/Toast.jsx";
+import { useEffect, useRef, useState } from "react";
+import { getSuppliers } from "../../services/suppliers.service";
+import { createSupplierOrder } from "../../services/supplierOrder.service";
 
-// TODO: Import services for orders, items, suppliers, products
-
-function OrderPreview({ orderId, supplierId, onClose }) {
-  // States
-  const [supplier, setSupplier] = useState(null);
-  const [supplierSearch, setSupplierSearch] = useState("");
-  const [supplierOptions, setSupplierOptions] = useState([]);
-  const [items, setItems] = useState([]);
+function SupplierSelectForm({ onClose, onSuccess }) {
+  const [suppliers, setSuppliers] = useState([]);
+  const [query, setQuery] = useState("");
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [addingItem, setAddingItem] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const [newItem, setNewItem] = useState({
-    product: "",
-    quantity: 1,
-    price: 0,
-    tax: 0,
-    discount: 0,
-  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  // Layout
-  const asideRef = useRef(null);
-  const { showToast } = useToast();
+  const wrapperRef = useRef(null);
 
-  // Fetch suppliers for dropdown
   useEffect(() => {
-    // TODO: fetch suppliers matching supplierSearch
-    // setSupplierOptions([...]);
-  }, [supplierSearch]);
+    setLoading(true);
+    getSuppliers({ status: "active", limit: 100 })
+      .then((data) => {
+        setSuppliers(Array.isArray(data) ? data : data.data || []);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-  // Fetch order/items if orderId exists
   useEffect(() => {
-    // TODO: fetch order and items
-  }, [orderId]);
-
-  // Calculate subtotal for each item
-  const calcSubtotal = (item) => {
-    return (
-      Number(item.price) * Number(item.quantity) +
-      Number(item.tax) -
-      Number(item.discount)
-    ).toFixed(2);
-  };
-
-  // Add new item to list
-  const handleAddItem = () => {
-    setItems([...items, { ...newItem, subtotal: calcSubtotal(newItem) }]);
-    setNewItem({ product: "", quantity: 1, price: 0, tax: 0, discount: 0 });
-    setAddingItem(false);
-  };
-
-  // Total order
-  const orderTotal = items
-    .reduce((sum, item) => sum + Number(item.subtotal), 0)
-    .toFixed(2);
-
-  // When closing animation ends, call onClose
-  useEffect(() => {
-    if (!closing) return;
-    const aside = asideRef.current;
-    if (!aside) return;
-    const handleAnimationEnd = () => {
-      onClose();
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
     };
-    aside.addEventListener("animationend", handleAnimationEnd);
-    return () => aside.removeEventListener("animationend", handleAnimationEnd);
-  }, [closing, onClose]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredSuppliers = suppliers.filter((s) =>
+    s.name.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  const handleSelect = (supplier) => {
+    setSelectedSupplier(supplier);
+    setQuery(supplier.name);
+    setShowDropdown(false);
+    setError("");
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!selectedSupplier || selectedSupplier.name !== query) {
+      setError("Please select a valid supplier from the list");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const order = await createSupplierOrder({
+        id_supplier: selectedSupplier.id_supplier,
+      });
+
+      onSuccess?.(order);
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ??
+          err?.response?.data?.error ??
+          err?.response?.data ??
+          err?.message ??
+          "Error creating supplier order",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <div className="preview-overlay" onClick={onClose}>
-      <aside
-        ref={asideRef}
-        className={`preview${closing ? " slide-out" : ""}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="preview__header">
-          <h2>Order Preview</h2>
-          <button className="close-btn" onClick={onClose}>
-            <IoIosCloseCircle size={40} />
-          </button>
-        </div>
-        <div className="preview__header-actions">
-          {/* Supplier search input */}
+    <form className="customer-form" onSubmit={handleSubmit}>
+      <div className="form-section">
+        <h3>Create supplier order</h3>
+
+        <div className="form-field autocomplete" ref={wrapperRef}>
+          <label>Supplier</label>
+
           <input
             type="text"
-            placeholder="Search supplier by name or email"
-            value={supplierSearch}
-            onChange={(e) => setSupplierSearch(e.target.value)}
-            style={{ width: 280, marginRight: 12 }}
+            value={query}
+            placeholder="Start typing supplier name..."
+            onFocus={() => setShowDropdown(true)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedSupplier(null);
+              setShowDropdown(true);
+              setError("");
+            }}
+            className={error ? "input-error" : ""}
+            disabled={submitting}
           />
-          {/* Dropdown options (mock) */}
-          {supplierOptions.length > 0 && (
-            <div className="dropdown">
-              {supplierOptions.map((opt) => (
-                <div key={opt.id} onClick={() => setSupplier(opt)}>
-                  {opt.name}
+
+          {showDropdown && (
+            <div className="autocomplete-dropdown">
+              {loading ? (
+                <div className="autocomplete-item muted">
+                  Loading suppliers...
                 </div>
-              ))}
+              ) : filteredSuppliers.length === 0 ? (
+                <div className="autocomplete-item muted">
+                  No suppliers found
+                </div>
+              ) : (
+                filteredSuppliers.map((s) => (
+                  <div
+                    key={s.id_supplier}
+                    className={`autocomplete-item ${
+                      selectedSupplier?.id_supplier === s.id_supplier
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() => handleSelect(s)}
+                  >
+                    {s.name}
+                  </div>
+                ))
+              )}
             </div>
           )}
+
+          {error && <span className="form-error">{error}</span>}
         </div>
-        <div className="preview-content">
-          {/* Items table */}
-          <table style={{ width: "100%", marginBottom: 16 }}>
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Tax</th>
-                <th>Discount</th>
-                <th>Subtotal</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, idx) => (
-                <tr key={idx}>
-                  <td>{item.product}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.price}</td>
-                  <td>{item.tax}</td>
-                  <td>{item.discount}</td>
-                  <td>{item.subtotal}</td>
-                  <td>
-                    <button
-                      onClick={() =>
-                        setItems(items.filter((_, i) => i !== idx))
-                      }
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {addingItem && (
-                <tr>
-                  <td>
-                    <input
-                      type="text"
-                      placeholder="Product name"
-                      value={newItem.product}
-                      onChange={(e) =>
-                        setNewItem({ ...newItem, product: e.target.value })
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min={1}
-                      value={newItem.quantity}
-                      onChange={(e) =>
-                        setNewItem({ ...newItem, quantity: e.target.value })
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min={0}
-                      value={newItem.price}
-                      onChange={(e) =>
-                        setNewItem({ ...newItem, price: e.target.value })
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min={0}
-                      value={newItem.tax}
-                      onChange={(e) =>
-                        setNewItem({ ...newItem, tax: e.target.value })
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min={0}
-                      value={newItem.discount}
-                      onChange={(e) =>
-                        setNewItem({ ...newItem, discount: e.target.value })
-                      }
-                    />
-                  </td>
-                  <td>{calcSubtotal(newItem)}</td>
-                  <td>
-                    <button onClick={handleAddItem}>Add</button>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          <button onClick={() => setAddingItem(true)}>Add Item</button>
-          <div style={{ marginTop: 16, fontWeight: "bold" }}>
-            Total: {orderTotal} €
-          </div>
+      </div>
+
+      <div className="form-actions">
+        <div className="form-actions__btns">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={onClose}
+            disabled={submitting}
+          >
+            Cancel
+          </button>
+          <button type="submit" className="btn-primary" disabled={submitting}>
+            {submitting ? "Creating..." : "Create order"}
+          </button>
         </div>
-        {/* Confirm/complete order button */}
-        <button style={{ marginTop: 24 }}>Confirm Order</button>
-      </aside>
-    </div>
+      </div>
+    </form>
   );
 }
 
-export default OrderPreview;
+export default SupplierSelectForm;
