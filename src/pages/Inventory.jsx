@@ -16,6 +16,7 @@ import LoadingOverlay from "../components/ui/LoadingOverlay";
 import ConfirmPopup from "../components/Modals/ConfirmPopup.jsx";
 import FormModal from "../components/Modals/FormModal.jsx";
 import WarehouseForm from "../components/Forms/WarehouseForm.jsx";
+import InventoryPreview from "../components/previews/InventoryPreview.jsx";
 
 // Table
 import TableToolbar from "../components/TableToolbar.jsx";
@@ -32,6 +33,10 @@ import {
 
 function Inventory() {
   const { showToast } = useToast();
+  // STATES
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [warehouseId, setWarehouseId] = useState(null);
+
   // CONFIRM POPUP
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingWarehouse, setPendingWarehouse] = useState(null);
@@ -161,6 +166,13 @@ function Inventory() {
     );
   };
 
+  // INVENTORY PREVIEW
+  const openPreview = (row) => {
+    if (!row?.id) return;
+    setWarehouseId(row.id);
+    setIsPreviewOpen(true);
+  };
+
   return (
     <div className="customers-container">
       <ConfirmPopup
@@ -271,6 +283,17 @@ function Inventory() {
           }}
         />
       </FormModal>
+
+      {isPreviewOpen && (
+        <InventoryPreview
+          id_warehouse={warehouseId}
+          onClose={() => {
+            setIsPreviewOpen(false);
+            setWarehouseId(null);
+            fetchWarehouses();
+          }}
+        />
+      )}
     </div>
   );
 }

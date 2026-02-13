@@ -1,5 +1,5 @@
 import "./preview.css";
-import { useEffect, useState, useRef, use } from "react";
+import { useEffect, useState, useRef } from "react";
 import { IoIosCloseCircle, IoIosAddCircle } from "react-icons/io";
 import { FaCheckCircle, FaTrash, FaEye } from "react-icons/fa";
 
