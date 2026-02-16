@@ -1,7 +1,7 @@
 import { useAuth } from "../auth/AuthContext";
 import "./sidebar.css";
 import { FaHouse, FaUsers } from "react-icons/fa6";
-import { FaShoppingCart, FaBox } from "react-icons/fa";
+import { FaShoppingCart, FaBox, FaTag } from "react-icons/fa";
 import { IoPeople } from "react-icons/io5";
 
 function Sidebar() {
@@ -37,6 +37,10 @@ function Sidebar() {
             <a href="/app/inventory" className="sidebar-nav__item">
               <FaBox size={25} />
               Inventory
+            </a>
+            <a href="/app/products" className="sidebar-nav__item">
+              <FaTag size={25} />
+              Products
             </a>
           </>
         )}
