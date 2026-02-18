@@ -6,6 +6,7 @@ export const productColumns = [
     label: "Name",
     render: (row) => <strong>{row.name}</strong>,
   },
+  { key: "components", label: "Components" },
   { key: "price", label: "Price" },
   {
     key: "status",

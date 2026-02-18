@@ -1,5 +1,10 @@
 import api from "../api/axios";
 
+export const getAllComponents = async () => {
+  const response = await api.get("/components");
+  return response;
+};
+
 export const getComponentsBySupplierId = async (
   id,
   { page = 1, limit = 5, status = "active", sort = "name", order = "asc" } = {},
