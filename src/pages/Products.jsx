@@ -5,9 +5,10 @@ import { FaArrowTrendUp, FaPowerOff } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 import { useToast } from "../components/ui/Toast";
 
+import LoadingOverlay from "../components/ui/LoadingOverlay";
+import AddBtn from "../components/addBtn";
 import DashboardCard from "../components/DashboardCard";
 import CardTop from "../components/CardTop";
-import LoadingOverlay from "../components/ui/LoadingOverlay";
 
 import TableToolbar from "../components/TableToolbar";
 import DataTable from "../components/DataTable/DataTable";
@@ -22,7 +23,7 @@ import {
 import FormModal from "../components/Modals/FormModal";
 import ProductForm from "../components/Forms/ProductForm";
 
-import AddBtn from "../components/addBtn";
+import ProductPreview from "../components/previews/ProductPreview.jsx";
 
 function Products() {
   const { showToast } = useToast();
@@ -68,6 +69,7 @@ function Products() {
         price: product.price,
         status: product.active ? "Active" : "Inactive",
         active: product.active,
+        components: product.components.length,
       }));
 
       setProducts(mappedProducts);
@@ -86,6 +88,17 @@ function Products() {
   }, [page, statusFilter, sort]);
 
   // ACTIONS
+  // PREVIEW
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [productId, setProductId] = useState(null);
+
+  const openPreview = (row) => {
+    console.log("ID: ", row.id);
+    if (!row.id) return;
+    setProductId(row.id);
+    setIsPreviewOpen(true);
+  };
+
   // EDIT
   const openEdit = async (row) => {
     try {
@@ -234,6 +247,15 @@ function Products() {
           }}
         />
       </FormModal>
+      {isPreviewOpen && (
+        <ProductPreview
+          productId={productId}
+          onClose={() => {
+            setIsPreviewOpen(false);
+            setProductId(null);
+          }}
+        />
+      )}
     </div>
   );
 }

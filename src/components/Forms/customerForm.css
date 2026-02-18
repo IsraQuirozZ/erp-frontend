@@ -157,3 +157,16 @@
 .form-row .form-field {
   flex: 1;
 }
+
+/* COUNTER  */
+
+.form-field-counter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.counterBtn:hover {
+  cursor: pointer;
+  color: var(--hover);
+}
