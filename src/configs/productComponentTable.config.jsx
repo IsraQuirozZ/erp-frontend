@@ -1,3 +1,4 @@
+// TODO: Add inventory stock, % or pill (Critical, Low, Ok)
 export const productComponentColumns = [
   {
     key: "name",

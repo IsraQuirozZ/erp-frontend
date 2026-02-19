@@ -280,7 +280,10 @@ function ProductPreview({ productId, onClose }) {
       <div onClick={(e) => e.stopPropagation()}>
         <FormModal
           open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={async () => {
+            setIsModalOpen(false);
+            await fetchProduct();
+          }}
           title={
             formMode === "create"
               ? "Create Product-Component"
@@ -291,9 +294,12 @@ function ProductPreview({ productId, onClose }) {
             mode={formMode}
             initialData={selectedComponent}
             productId={productId}
-            onClose={() => setIsModalOpen(false)}
+            onClose={() => {
+              setIsModalOpen(false);
+            }}
             onSuccess={async () => {
               setIsModalOpen(false);
+              await fetchProduct();
               await fetchProductComponents();
             }}
           />
