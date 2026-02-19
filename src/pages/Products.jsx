@@ -173,7 +173,7 @@ function Products() {
           title="Total products"
           icon={FaTag}
           iconBgColor="#00c24e"
-          data="1"
+          data={total}
           stats={3}
         />
         <DashboardCard
@@ -250,9 +250,10 @@ function Products() {
       {isPreviewOpen && (
         <ProductPreview
           productId={productId}
-          onClose={() => {
+          onClose={async () => {
             setIsPreviewOpen(false);
             setProductId(null);
+            await fetchProducts();
           }}
         />
       )}

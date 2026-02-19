@@ -8,6 +8,7 @@ import CreateUser from "../pages/CreateUser";
 import DashboardLayout from "../layouts/DashboardLayout";
 import Dashboard from "../pages/Dashboard";
 import Customers from "../pages/Customers";
+import Sales from "../pages/Sales";
 import Suppliers from "../pages/Suppliers";
 import Purchases from "../pages/Purchases";
 import Inventory from "../pages/Inventory";
@@ -52,6 +53,15 @@ function AppRouter() {
               element={
                 <RequireRole allowedRoles={["ADMIN"]}>
                   <Customers />
+                </RequireRole>
+              }
+            />
+
+            <Route
+              path="sales"
+              element={
+                <RequireRole allowedRoles={["ADMIN"]}>
+                  <Sales />
                 </RequireRole>
               }
             />

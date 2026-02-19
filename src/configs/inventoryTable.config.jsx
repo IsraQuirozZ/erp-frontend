@@ -11,7 +11,7 @@ export const inventoryColumns = [
       let color = "#28a745";
       let text = "OK";
 
-      if (row.current_stock <= 0) {
+      if (row.current_stock <= 10) {
         color = "#dc3545";
         text = "Critical";
       } else if (row.current_stock <= row.max_stock * 0.2) {

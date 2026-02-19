@@ -1,5 +1,6 @@
 import api from "../api/axios";
 
+// Endopint in suppliers routes: /products/{productId}/components
 export const getProductComponentsByProductId = async (productId) => {
   const response = await api.get(`/products/${productId}/components`);
   return response.data;

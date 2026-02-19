@@ -1,6 +1,6 @@
 import { useAuth } from "../auth/AuthContext";
 import "./sidebar.css";
-import { FaHouse, FaUsers } from "react-icons/fa6";
+import { FaHouse, FaUsers, FaDollarSign } from "react-icons/fa6";
 import { FaShoppingCart, FaBox, FaTag } from "react-icons/fa";
 import { IoPeople } from "react-icons/io5";
 
@@ -25,6 +25,10 @@ function Sidebar() {
             <a href="/app/customers" className="sidebar-nav__item">
               <FaUsers size={25} />
               Customers
+            </a>
+            <a href="/app/sales" className="sidebar-nav__item">
+              <FaDollarSign size={25} />
+              Sales
             </a>
             <a href="/app/suppliers" className="sidebar-nav__item">
               <IoPeople size={25} />
